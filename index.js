@@ -51,7 +51,7 @@ let DependencyInjection = require("./DependencyInjection.js");
 // Ok so now for the business end of the injector!
 const $Inject = new DependencyInjection();
 
-$Inject.addService('client', HttpClient);
+$Inject.addSingleton('client', HttpClient);
 $Inject.addService('database', Database);
 $Inject.addService('api', TwitterApi);
 $Inject.addService('tweeter', Tweeter);
@@ -78,6 +78,4 @@ app.tweeter.api.client.config.values = 777;
 console.log(app.tweeter.api.client.value)
 console.log(app.tweeter.client.value)
 
-console.log(JSON.stringify(app, null, 2));
-
-// https://github.com/jeffijoe/awilix/blob/master/package.json#containerloadmodules
+//console.log(JSON.stringify(app, null, 2));

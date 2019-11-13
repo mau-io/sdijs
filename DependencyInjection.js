@@ -1,3 +1,15 @@
+const c = {
+  reset: '\033[0m',
+
+  //text color
+  red: '\033[31m',
+  green: '\033[32m',
+  yellow: '\033[33m',
+  blue: '\033[34m',
+  magenta: '\033[35m',
+  cyan: '\033[36m',
+  white: '\033[37m',
+}
 class DependencyInjection  {
   
   constructor() {
@@ -21,16 +33,16 @@ class DependencyInjection  {
 
   getInjector(module, name) {
 
-		var container = this;
+		let container = this;
 		
-		var paramParser = new Proxy({}, {
+		let paramParser = new Proxy({}, {
 			// The `get` handler is invoked whenever a get-call for
 			// `injector.*` is made. We make a call to an external service
 			// to actually hand back in the configured service. The proxy
 			// allows us to bypass parsing the function params using
 			// taditional regex or even the newer parser.
-			get: (target, name) => {
-				console.log(module.service.name, "<".padEnd(25 - module.service.name.length, "-"), name)
+			get: (target, name) => { 
+				console.info(`${c.white} ${this._services.get(name).singleton ? (c.red+'[S]'):'[T]'} ${name} ${c.blue} ${'>'.padStart(25 - name.length, '-')} ${c.green} ${module.singleton ? (c.red+'[S]'):'[T]'} ${module.service.name} ${c.reset}`)
 				return container.resolve(name);
 			},
 
