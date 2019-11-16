@@ -23,11 +23,13 @@ class DependencyInjection  {
     return this.getInjector(module, name);
   }
 
-  addService(name, service) {
+  addService(service, alias) {
+    let name = alias ? alias : this._formatName(service.name);
     this._services.set(name, {service, singleton: false})
   }
 
-  addSingleton(name, service) {
+  addSingleton(service, alias) {
+    let name = alias ? alias : this._formatName(service.name);
     this._services.set(name, {service, singleton: true})
   }
 
@@ -55,9 +57,9 @@ class DependencyInjection  {
     
     if(!container._isClass(module.service)){
       if(module.singleton) {
-        return {...module.service} // Send a copy object with ES6 style
-      }else{
         return module.service; // Send reference object
+      }else{
+        return {...module.service} // Send a copy object with ES6 style
       }
     } 
     
@@ -83,6 +85,9 @@ class DependencyInjection  {
   }
   _isClass(definition) {
     return typeof definition === 'function';
+  }
+  _formatName(string){
+    return string.charAt(0).toLowerCase() + string.substr(1);
   }
 }
 

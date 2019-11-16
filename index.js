@@ -1,14 +1,15 @@
 // app.js
 class App {
-  constructor({tweeter, timeline}) {
+  constructor({tweeter, timeline, config}) {
     this.tweeter = tweeter;
     this.timeline = timeline;
+    this.config = config
    }
 }
 
 //HttpClient.js
 class HttpClient {
-  constructor({database, valuedirect, 'config chida': config}) {
+  constructor({database, valuedirect, config}) {
     this.value = "Valor Original";
     this.bd = database;
     this.valuedirect = valuedirect;
@@ -40,10 +41,15 @@ class Tweeter {
 }
 
 class Database {
-  constructor({'config chida': alias }) {
+  constructor({'config': alias }) {
       this.name = "bd";
       this.config = alias;
   }
+}
+
+let config = {
+  values: 10,
+  configuration: 2
 }
 
 // startup.js
@@ -51,31 +57,32 @@ let DependencyInjection = require("./DependencyInjection.js");
 // Ok so now for the business end of the injector!
 const $Inject = new DependencyInjection();
 
-$Inject.addSingleton('client', HttpClient);
-$Inject.addService('database', Database);
-$Inject.addService('api', TwitterApi);
-$Inject.addService('tweeter', Tweeter);
-$Inject.addService('timeline', Timeline);
+$Inject.addSingleton(HttpClient, 'client');
+$Inject.addService(Database);
+$Inject.addService(TwitterApi, 'api');
+$Inject.addService(Tweeter);
+$Inject.addService(Timeline);
 
-$Inject.addSingleton('config chida', {
-  values: 1,
-  configuration:2
-});
+$Inject.addService(config, 'config');
 
-$Inject.addService('valuedirect', 42);
+$Inject.addService(42, 'valuedirect');
 
-$Inject.addService('app', App);
+$Inject.addService(App);
 
 var app = $Inject.resolve('app');
 
 console.log("Same instance? " + (app.tweeter.client === app.tweeter.api.client)); 
-console.log(app.tweeter.api.client.test())
-console.log(app.tweeter.client.test())
+console.log(app.tweeter.api.client.test());
+console.log(app.tweeter.client.test());
+
+app.valuedirect = 666;
+
+app.config.values = 1000;
+console.log(app.config.values);
+console.log(app.tweeter.api.client.config.values);
 
 app.tweeter.api.client.value = "Valor Modificado";
-app.valuedirect = 666
-app.tweeter.api.client.config.values = 777;
-console.log(app.tweeter.api.client.value)
-console.log(app.tweeter.client.value)
+console.log(app.tweeter.api.client.value);
+console.log(app.tweeter.client.value);
 
 //console.log(JSON.stringify(app, null, 2));
