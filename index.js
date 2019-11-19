@@ -55,7 +55,7 @@ let config = {
 // startup.js
 let DependencyInjection = require("./DependencyInjection.js");
 // Ok so now for the business end of the injector!
-const $Inject = new DependencyInjection();
+const $Inject = new DependencyInjection({verbose:true});
 
 $Inject.addSingleton(HttpClient, 'client');
 $Inject.addService(Database);

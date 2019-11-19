@@ -12,9 +12,10 @@ const c = {
 }
 class DependencyInjection  {
   
-  constructor() {
+  constructor({verbose = false } = {}) {
     this._services = new Map();
     this._singletons = new Map();
+    this._verbose = verbose;
   }
 
   resolve(name){
@@ -43,14 +44,14 @@ class DependencyInjection  {
 			// to actually hand back in the configured service. The proxy
 			// allows us to bypass parsing the function params using
 			// taditional regex or even the newer parser.
-			get: (target, name) => { 
-				console.info(`${c.white} ${this._services.get(name).singleton ? (c.red+'[S]'):'[T]'} ${name} ${c.blue} ${'>'.padStart(25 - name.length, '-')} ${c.green} ${module.singleton ? (c.red+'[S]'):'[T]'} ${module.service.name} ${c.reset}`)
-				return container.resolve(name);
+			get: (target, key) => { 
+        container._log(key, module);
+				return container.resolve(key);
 			},
 
 			// You shouldn't be able to set values on the injector.
-			set: (target, name, value) => {
-				throw new Error(`Don't try to set ${name}!`);
+			set: (target, key, value) => {
+				throw new Error(`Don't try to set ${key}!`);
 			}
 
 		});
@@ -88,6 +89,11 @@ class DependencyInjection  {
   }
   _formatName(string){
     return string.charAt(0).toLowerCase() + string.substr(1);
+  }
+  _log(name, module){
+    if(this._verbose){
+      console.info(`${c.white} ${this._services.get(name).singleton ? (c.red+'[S]'):'[T]'} ${name} ${c.blue} ${'>'.padStart(25 - name.length, '-')} ${c.green} ${module.singleton ? (c.red+'[S]'):'[T]'} ${module.service.name} ${c.reset}`);
+    }
   }
 }
 
