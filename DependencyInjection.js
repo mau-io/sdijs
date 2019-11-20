@@ -85,7 +85,8 @@ class DependencyInjection  {
 		
   }
   _isClass(definition) {
-    return typeof definition === 'function';
+		return typeof definition === 'function'
+    && /^class\s/.test(Function.prototype.toString.call(definition));
   }
   _formatName(string){
     return string.charAt(0).toLowerCase() + string.substr(1);
