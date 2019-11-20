@@ -92,7 +92,9 @@ class DependencyInjection  {
   }
   _log(name, module){
     if(this._verbose){
-      console.info(`${c.white} ${this._services.get(name).singleton ? (c.red+'[S]'):'[T]'} ${name} ${c.blue} ${'>'.padStart(25 - name.length, '-')} ${c.green} ${module.singleton ? (c.red+'[S]'):'[T]'} ${module.service.name} ${c.reset}`);
+      let from = `${this._services.get(name).singleton ? (c.red + '[S]') : '[T]'} ${name}`;  
+      let to = `${module.singleton ? (c.red + '[S]') : '[T]'} ${module.service.name}`;
+      console.info(`${c.white} ${from} ${c.blue} ${'>'.padStart(20 - name.length, '-')} ${c.green} ${to} ${c.reset}`);
     }
   }
 }
