@@ -1,88 +1,109 @@
-// app.js
-class App {
-  constructor({tweeter, timeline, config}) {
-    this.tweeter = tweeter;
-    this.timeline = timeline;
-    this.config = config
-   }
-}
+const ANSI = {
+  reset: '\033[0m',
 
-//HttpClient.js
-class HttpClient {
-  constructor({database, valuedirect, config}) {
-    this.value = "Valor Original";
-    this.bd = database;
-    this.valuedirect = valuedirect;
-    this.config = config;
+  // Text color
+  red: '\033[31m',
+  green: '\033[32m',
+  yellow: '\033[33m',
+  blue: '\033[34m',
+  magenta: '\033[35m',
+  cyan: '\033[36m',
+  white: '\033[37m',
+}
+class DependencyInjection  {
+  
+  constructor({verbose = false } = {}) {
+    this._services = new Map();
+    this._singletons = new Map();
+    this._verbose = verbose;
   }
-  test(){
-    return "se ejecuto test";
+
+  resolve(name){
+    const module = this._services.get(name);
+    if(!module) throw new Error(`${ANSI.red} Module - ${name} - doesn't exist! ${ANSI.reset}`);
+    return this.getInjector(module, name);
+  }
+
+  addService(service, alias) {
+    let name = alias ? alias : this._formatName(service.name);
+    this._services.set(name, {service, singleton: false})
+  }
+
+  addSingleton(service, alias) {
+    let name = alias ? alias : this._formatName(service.name);
+    this._services.set(name, {service, singleton: true})
+  }
+
+  getInjector(module, name) {
+
+		let container = this;
+		
+		let paramParser = new Proxy({}, {
+			// The "get" handler is invoked whenever a get-call for
+			// "injector.*" is made. We make a call to an external service
+			// to actually hand back in the configured service. The proxy
+			// allows us to bypass parsing the function params using
+			// taditional regex or even the newer parser.
+			get: (target, key) => { 
+        container._log(key, module);
+				return container.resolve(key);
+			},
+
+			// You shouldn't be able to set values on the injector.
+			set: (target, key, value) => {
+				throw new Error(`Don't try to set ${key}!`);
+			}
+
+		});
+    
+    if(!container._isClass(module.service)){
+      if(module.singleton) {
+        return module.service; // Send reference object
+      }else{
+        return {...module.service} // Send a copy object with ES6 style
+      }
+    } 
+    
+    if(module.singleton) {
+      const singletonInstance = container._singletons.get(name);
+
+      if(singletonInstance) {
+        return singletonInstance;
+      } else {
+        // Create Instance
+        const newSingletonInstance = new module.service(paramParser);
+        // Save Instance
+        container._singletons.set(name, newSingletonInstance);
+        // Send Instance
+        return newSingletonInstance;
+      }
+
+    }else{
+      // Create and Send Instance
+      return new module.service(paramParser);
+    }
+		
+  }
+  _isClass(definition) {
+		return typeof definition === 'function'
+      && /^class\s/.test(Function.prototype.toString.call(definition));
+  }
+  _formatName(string){
+    return string.charAt(0).toLowerCase() + string.substr(1);
+  }
+  _log(name, module) {
+    if(this._verbose){
+
+      try {
+        let from = `${this._services.get(name).singleton ? (ANSI.red + '[S]') : '[T]'} ${name}`;  
+        let to = `${module.singleton ? (ANSI.red + '[S]') : '[T]'} ${module.service.name}`;
+        console.info(`${ANSI.white} ${from} ${ANSI.blue} ${'>'.padStart(20 - name.length, '-')} ${ANSI.green} ${to} ${ANSI.reset}`);
+      } catch (error) {
+        
+      }
+      
+    }
   }
 }
 
-class TwitterApi {
-   constructor({client}) {
-       this.client = client;
-       this.hola = "api";
-   }
-}
-
-class Timeline {
-   constructor({api}) {
-       this.api = api;
-   }
-}
-
-class Tweeter {
-   constructor({api, client}) {
-       this.api = api;
-       this.client = client;
-   }
-}
-
-class Database {
-  constructor({'config': alias }) {
-      this.name = "bd";
-      this.config = alias;
-  }
-}
-
-let config = {
-  values: 10,
-  configuration: 2
-}
-
-// startup.js
-let DependencyInjection = require("./DependencyInjection.js");
-// Ok so now for the business end of the injector!
-const $Inject = new DependencyInjection({verbose:true});
-
-$Inject.addSingleton(HttpClient, 'client');
-$Inject.addService(Database);
-$Inject.addService(TwitterApi, 'api');
-$Inject.addService(Tweeter);
-$Inject.addService(Timeline);
-
-$Inject.addService(config, 'config');
-
-$Inject.addService(42, 'valuedirect');
-
-$Inject.addService(App);
-
-var app = $Inject.resolve('app');
-
-console.log("Same instance? " + (app.tweeter.client === app.tweeter.api.client)); 
-console.log(app.tweeter.api.client.test());
-console.log(app.tweeter.client.test());
-
-app.valuedirect = 666;
-
-app.config.values = 1000;
-console.log(app.config.values);
-console.log(app.tweeter.api.client.config.values);
-
-app.tweeter.api.client.value = "Valor Modificado";
-console.log(app.tweeter.api.client.value);
-console.log(app.tweeter.client.value);
-
-//console.log(JSON.stringify(app, null, 2));
+module.exports = DependencyInjection;

@@ -1,0 +1,19 @@
+{
+  "name": "simpple-di",
+  "version": "1.0.0",
+  "description": "Dependency Injection (DI) for NodeJs.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mau-io/DependencyInjectionJs.git"
+  },
+  "author": "Maurice",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mau-io/DependencyInjectionJs/issues"
+  },
+  "homepage": "https://github.com/mau-io/DependencyInjectionJs#readme"
+}

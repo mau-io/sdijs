@@ -1,5 +1,5 @@
 # DependencyInjectionJS
-A dependency-free Dependency Injection (DI) for JavaScript/Node. It’s lightweight, written in vanilla JavaScript, designed to inyect. No less, no more.
+A Dependency Injection (DI) Library for NodeJs. It’s lightweight, written in vanilla JavaScript, designed to inyect. No less, no more.
 
 ## Lifetime Types
 
