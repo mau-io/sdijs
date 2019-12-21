@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mau-io/DependencyInjectionJs.git"
+    "url": "git+ssh://github.com/mau-io/DependencyInjectionJs.git"
   },
   "author": "Maurice",
   "license": "MIT",
