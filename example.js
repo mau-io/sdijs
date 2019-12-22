@@ -1,9 +1,10 @@
 // app.js
 class App {
-  constructor({tweeter, timeline, config}) {
+  constructor({tweeter, timeline, config, ff}) {
     this.tweeter = tweeter;
     this.timeline = timeline;
-    this.config = config
+    this.config = config;
+    this.ff = ff;
    }
 }
 
@@ -49,8 +50,21 @@ class Database {
 
 let config = {
   values: 10,
-  configuration: 2
+  configuration: 20
 }
+
+let ff = ({config}) => {
+ 
+  return {
+    test: function () {
+      return config.values * config.configuration;
+    },
+    saveUser: function () {
+      return 'saveUser';
+    }
+  };
+}
+
 
 // startup.js
 let DependencyInjection = require("./index.js");
@@ -68,12 +82,16 @@ $Inject.addService(config, 'config');
 $Inject.addService(42, 'valuedirect');
 
 $Inject.addService(App);
+$Inject.addSingleton(ff);
 
 var app = $Inject.resolve('app');
 
 console.log("Same instance? " + (app.tweeter.client === app.tweeter.api.client)); 
 console.log(app.tweeter.api.client.test());
 console.log(app.tweeter.client.test());
+
+console.log(app.ff.test());
+console.log(app.ff.saveUser());
 
 app.valuedirect = 666;
 

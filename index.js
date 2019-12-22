@@ -54,7 +54,28 @@ class DependencyInjection  {
 				throw new Error(`Don't try to set ${key}!`);
 			}
 
-		});
+    });
+    
+    if(container._isFunction(module.service) && !container._isClass(module.service)){
+      if(module.singleton) {
+        const singletonInstance = container._singletons.get(name);
+
+        if(singletonInstance) {
+          return singletonInstance;
+        } else {
+          // Create Instance
+          const newSingletonInstance = module.service.call(null, paramParser);
+          // Save Instance
+          container._singletons.set(name, newSingletonInstance);
+          // Send Instance
+          return newSingletonInstance;
+        }
+  
+      }else{
+        // Create and Send Instance
+        return new module.service(paramParser);
+      }
+    } 
     
     if(!container._isClass(module.service)){
       if(module.singleton) {
@@ -87,6 +108,9 @@ class DependencyInjection  {
   _isClass(definition) {
 		return typeof definition === 'function'
       && /^class\s/.test(Function.prototype.toString.call(definition));
+  }
+  _isFunction(definition) {
+		return typeof definition === 'function';
   }
   _formatName(string){
     return string.charAt(0).toLowerCase() + string.substr(1);
