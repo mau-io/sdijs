@@ -50,7 +50,7 @@ class Database {
 
 let config = {
   values: 10,
-  configuration: 20
+  configuration: 10
 }
 
 let ff = ({config}) => {
@@ -60,7 +60,7 @@ let ff = ({config}) => {
       return config.values * config.configuration;
     },
     saveUser: function () {
-      return 'saveUser';
+      return 'test saveUser';
     }
   };
 }
@@ -72,16 +72,16 @@ let DependencyInjection = require("./index.js");
 const $Inject = new DependencyInjection({verbose:true});
 
 $Inject.addSingleton(HttpClient, 'client');
-$Inject.addService(Database);
-$Inject.addService(TwitterApi, 'api');
-$Inject.addService(Tweeter);
-$Inject.addService(Timeline);
+$Inject.AddTransient(Database);
+$Inject.AddTransient(TwitterApi, 'api');
+$Inject.AddTransient(Tweeter);
+$Inject.AddTransient(Timeline);
 
-$Inject.addService(config, 'config');
+$Inject.AddTransient(config, 'config');
 
-$Inject.addService(42, 'valuedirect');
+$Inject.AddTransient(42, 'valuedirect');
 
-$Inject.addService(App);
+$Inject.AddTransient(App);
 $Inject.addSingleton(ff);
 
 var app = $Inject.resolve('app');

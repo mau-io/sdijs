@@ -10,7 +10,7 @@ const ANSI = {
   cyan: '\033[36m',
   white: '\033[37m',
 }
-class DependencyInjection  {
+module.exports = class DependencyInjection {
   
   constructor({verbose = false } = {}) {
     this._services = new Map();
@@ -18,20 +18,24 @@ class DependencyInjection  {
     this._verbose = verbose;
   }
 
-  resolve(name){
+  resolve(name) {
     const module = this._services.get(name);
     if(!module) throw new Error(`${ANSI.red} Module - ${name} - doesn't exist! ${ANSI.reset}`);
     return this.getInjector(module, name);
   }
 
-  addService(service, alias) {
-    let name = alias ? alias : this._formatName(service.name);
-    this._services.set(name, {service, singleton: false})
+  AddTransient(service, alias) {
+    this.register(service, alias, false);
   }
 
   addSingleton(service, alias) {
+    this.register(service, alias, true);
+  }
+
+  register(service, alias, singleton){
+    const type = this._isClass(service) ? 'class' : typeof service;
     let name = alias ? alias : this._formatName(service.name);
-    this._services.set(name, {service, singleton: true})
+    this._services.set(name, {type, service, singleton})
   }
 
   getInjector(module, name) {
@@ -55,8 +59,8 @@ class DependencyInjection  {
 			}
 
     });
-    
-    if(container._isFunction(module.service) && !container._isClass(module.service)){
+ 
+    if(container._isFunction(module.service)) {
       if(module.singleton) {
         const singletonInstance = container._singletons.get(name);
 
@@ -64,7 +68,8 @@ class DependencyInjection  {
           return singletonInstance;
         } else {
           // Create Instance
-          const newSingletonInstance = module.service.call(null, paramParser);
+          const newSingletonInstance = container._isClass(module.service) ? 
+            new module.service(paramParser) : module.service.call(null, paramParser);
           // Save Instance
           container._singletons.set(name, newSingletonInstance);
           // Send Instance
@@ -73,37 +78,16 @@ class DependencyInjection  {
   
       }else{
         // Create and Send Instance
-        return new module.service(paramParser);
+        return container._isClass(module.service) ? 
+          new module.service(paramParser) : module.service.call(null, paramParser);
       }
-    } 
-    
-    if(!container._isClass(module.service)){
-      if(module.singleton) {
-        return module.service; // Send reference object
-      }else{
-        return {...module.service} // Send a copy object with ES6 style
-      }
-    } 
-    
-    if(module.singleton) {
-      const singletonInstance = container._singletons.get(name);
+    } else {
 
-      if(singletonInstance) {
-        return singletonInstance;
-      } else {
-        // Create Instance
-        const newSingletonInstance = new module.service(paramParser);
-        // Save Instance
-        container._singletons.set(name, newSingletonInstance);
-        // Send Instance
-        return newSingletonInstance;
-      }
-
-    }else{
-      // Create and Send Instance
-      return new module.service(paramParser);
+      return  module.singleton  ? 
+              module.service    : // Send reference object 
+        { ...module.service }     // Send a copy object with ES6 style
     }
-		
+  	
   }
   _isClass(definition) {
 		return typeof definition === 'function'
@@ -112,16 +96,15 @@ class DependencyInjection  {
   _isFunction(definition) {
 		return typeof definition === 'function';
   }
-  _formatName(string){
+  _formatName(string) {
     return string.charAt(0).toLowerCase() + string.substr(1);
   }
   _log(name, module) {
     if(this._verbose){
-
       try {
-        let from = `${this._services.get(name).singleton ? (ANSI.red + '[S]') : '[T]'} ${name}`;  
-        let to = `${module.singleton ? (ANSI.red + '[S]') : '[T]'} ${module.service.name}`;
-        console.info(`${ANSI.white} ${from} ${ANSI.blue} ${'>'.padStart(20 - name.length, '-')} ${ANSI.green} ${to} ${ANSI.reset}`);
+        let from = `${this._services.get(name).singleton ? ANSI.cyan + '[S]' : '[T]'} (${this._services.get(name).type}) ${name}`;  
+        let to = `${module.singleton ? (ANSI.cyan + '[S]') : '[T]'} ${module.service.name}`;
+        console.info(`${ANSI.white} ${from} ${ANSI.blue} ${'>'.padStart(20 - name.length - this._services.get(name).type.length, '-')} ${ANSI.green} ${to} ${ANSI.reset}`);
       } catch (error) {
         
       }
@@ -129,5 +112,3 @@ class DependencyInjection  {
     }
   }
 }
-
-module.exports = DependencyInjection;
