@@ -1,6 +1,6 @@
-const DiJs = require("./index.js");
+const sdijs = require("./index.js");
 
-const $Inject = new DiJs({
+const $Inject = new sdijs({
   verbose: true
 });
 

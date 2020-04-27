@@ -1,6 +1,6 @@
-# DiJs
+# sdijs
 
-A Simple Dependency Injection (DI) library for NodeJs. It’s lightweight, zero dependency, written in vanilla JavaScript, designed to inyect. No less, no more.
+A Simple Dependency Injection (DI) library for NodeJs. It’s lightweight, zero dependency, written in vanilla JavaScript, designed to inyect. No less, No more.
 
 ### Why Dependency Injection ?
 
@@ -13,10 +13,10 @@ The Dependency Injection pattern is about separating the instantiation of object
 ## Example
 
 ```js
-const DiJs = require("./index.js");
+const sdijs = require("./index.js");
 
 // Initialize a new dijs instance.
-const $Inject = new DiJs({
+const $Inject = new sdijs({
   verbose: true
 });
 
@@ -100,13 +100,13 @@ $Inject.addSingleton(Service);
 
 # Usage
 
-## new DiJs(options)
+## new sdijs(options)
 Returns a new dijs instance with the given methods.
 ````js
-const DiJs = require("./index.js");
+const sdijs = require("./index.js");
 
 // Initialize a new dijs instance.
-const $Inject = new DiJs({
+const $Inject = new sdijs({
   verbose: true
 });
 ````
@@ -122,7 +122,7 @@ Sets a value in the namespace.
 Sets a value in the namespace.
 
 
-### $resolve()
+### $resolve(name)
 
 Resolves the dependency graph.
 

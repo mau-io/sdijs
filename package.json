@@ -1,5 +1,5 @@
 {
-  "name": "dijs",
+  "name": "sdijs",
   "version": "1.0.0",
   "description": "Dependency Injection (DI) for NodeJs.",
   "main": "index.js",
@@ -11,12 +11,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/mau-io/DiJs.git"
+    "url": "git+ssh://git@github.com/mau-io/sdijs.git"
   },
   "author": "Maurice T",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mau-io/DiJs/issues"
+    "url": "https://github.com/mau-io/sdijs/issues"
   },
-  "homepage": "https://github.com/mau-io/DiJs#readme"
+  "homepage": "https://github.com/mau-io/sdijs#readme"
 }
