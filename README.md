@@ -6,14 +6,20 @@ A Simple Dependency Injection (DI) library for NodeJs. It’s lightweight, zero 
 
 The Dependency Injection pattern is about separating the instantiation of objects from the actual logic and behavior that they encapsulate. This pattern has many benefits such as:
 
-- **explicit dependencies** - all dependencies are passed in as constructor arguments, which makes it easy to understand how particular object depends on the rest of the environment,
-- **code reuse** - such an object is much easier to reuse in other environments, because it is not coupled to a specific implementation of its dependencies,
+- **Explicit dependencies** - all dependencies are passed in as constructor arguments, which makes it easy to understand how particular object depends on the rest of the environment,
+- **Code reuse** - such an object is much easier to reuse in other environments, because it is not coupled to a specific implementation of its dependencies,
 - and **much easier to test**, because testing is essentially about instantiating a single object without the rest of the environment.
+
+### Install
+
+```js
+npm install sdijs
+```
 
 ## Example
 
 ```js
-const sdijs = require("./index.js");
+const sdijs = require('sdijs');
 
 // Initialize a new dijs instance.
 const $Inject = new sdijs({
@@ -103,7 +109,7 @@ $Inject.addSingleton(Service);
 ## new sdijs(options)
 Returns a new dijs instance with the given methods.
 ````js
-const sdijs = require("./index.js");
+const sdijs = require('sdijs');
 
 // Initialize a new dijs instance.
 const $Inject = new sdijs({
