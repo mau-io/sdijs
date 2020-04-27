@@ -1,19 +1,22 @@
 {
-  "name": "simpple-di",
+  "name": "dijs",
   "version": "1.0.0",
   "description": "Dependency Injection (DI) for NodeJs.",
   "main": "index.js",
+  "devDependencies": {
+    "mocha": "^6.2.2"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test --timeout 2s"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/mau-io/DependencyInjectionJs.git"
+    "url": "git+ssh://git@github.com/mau-io/DiJs.git"
   },
-  "author": "Maurice",
+  "author": "Maurice T",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mau-io/DependencyInjectionJs/issues"
+    "url": "https://github.com/mau-io/DiJs/issues"
   },
-  "homepage": "https://github.com/mau-io/DependencyInjectionJs#readme"
+  "homepage": "https://github.com/mau-io/DiJs#readme"
 }

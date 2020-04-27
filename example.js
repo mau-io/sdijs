@@ -1,104 +1,115 @@
-// app.js
-class App {
-  constructor({tweeter, timeline, config, ff}) {
-    this.tweeter = tweeter;
-    this.timeline = timeline;
-    this.config = config;
-    this.ff = ff;
-   }
-}
+const DiJs = require("./index.js");
 
-//HttpClient.js
-class HttpClient {
-  constructor({database, valuedirect, config}) {
-    this.value = "Valor Original";
-    this.bd = database;
-    this.valuedirect = valuedirect;
-    this.config = config;
-  }
-  test(){
-    return "test return";
+const $Inject = new DiJs({
+  verbose: true
+});
+
+// ======================================================
+// Config Object
+const int = 10;
+const CONFIG = {
+  int,
+  url: 'foo',
+  db: {
+    name: 'dev',
+    url: 'http://127.0.0.1:1234'
   }
 }
 
-class TwitterApi {
-   constructor({client}) {
-       this.client = client;
-       this.hola = "api";
-   }
-}
-
-class Timeline {
-   constructor({api}) {
-       this.api = api;
-   }
-}
-
-class Tweeter {
-   constructor({api, client}) {
-       this.api = api;
-       this.client = client;
-   }
-}
-
-class Database {
-  constructor({'config': alias }) {
-      this.name = "bd";
-      this.config = alias;
-  }
-}
-
-let config = {
-  values: 10,
-  configuration: 10
-}
-
-let ff = ({config}) => {
+// utils.js function
+const utils = ({config}) => {
  
   return {
-    test: function () {
-      return config.values * config.configuration;
-    },
-    saveUser: function () {
-      return 'test saveUser';
+    test: () => {
+      return config.int * config.int;
     }
   };
 }
 
+//Database.js Class
+class Database {
+  constructor({'config': configAlias, utils}) {
+    this.config = configAlias;
+    this.utils = utils;
+  }
 
-// startup.js
-let DependencyInjection = require("./index.js");
-// Ok so now for the business end of the injector!
-const $Inject = new DependencyInjection({verbose:true});
+  query(type) {
+    return this.config.db;
+  }
+}
 
-$Inject.addSingleton(HttpClient, 'client');
-$Inject.AddTransient(Database);
-$Inject.AddTransient(TwitterApi, 'api');
-$Inject.AddTransient(Tweeter);
-$Inject.AddTransient(Timeline);
+//HttpClient.js Class
+class HttpClient {
+  constructor({config, utils}) {
+    this.config = config;
+    this.utils = utils;
+  }
+  getInfo() {
+    return 'get ' + this.config.url;
+  }
+}
 
-$Inject.AddTransient(config, 'config');
+//Repository.js Class
+class Repository {
+  constructor({database}) {
+    this.database = database;
+  }
+  getUser() {
+    return this.database.query('user');
+  }
+}
 
-$Inject.AddTransient(42, 'valuedirect');
+//Service.js Class
+class Service {
+  constructor({repository, httpClient}) {
+    this.repository = repository;
+    this.httpClient = httpClient;
+  }
+  getAll(filter) {
+    return {
+      filter,
+      users: this.repository.getUser(),
+      info: this.httpClient.getInfo()
+    }
+  }
+}
 
-$Inject.AddTransient(App);
-$Inject.addSingleton(ff);
+//Controller.js Class
+class Controller {
+  constructor({service}) {
+    this.service = service;
+  }
+  home(filter) {
+    return this.service.getAll(filter);
+  }
+}
 
-var app = $Inject.resolve('app');
+//App.js Class
+class App {
+  constructor({controller, config, utils}) {
+    this.config = config;
+    this.controller = controller;
+    this.utils = utils;
+  }
 
-console.log("Same instance? " + (app.tweeter.client === app.tweeter.api.client)); 
-console.log(app.tweeter.api.client.test());
-console.log(app.tweeter.client.test());
+  router(filter) {
+    return {
+      home: this.controller.home(filter)
+    };
+  }
+}
 
-console.log(app.ff.test());
-console.log(app.ff.saveUser());
+$Inject.addSingleton(CONFIG, 'config');
+$Inject.addSingleton(utils, 'utils');
+$Inject.addSingleton(HttpClient);
+$Inject.addSingleton(Database);
+$Inject.addSingleton(Repository);
+$Inject.addSingleton(Service);
+$Inject.addSingleton(Controller);
 
-app.valuedirect = 666;
+// RESOLVE
+$Inject.addSingleton(App);
+const app = $Inject.resolve('app');
 
-app.config.values = 1000;
-console.assert(app.config.values = app.tweeter.api.client.config.values, "Should be different");
-
-app.tweeter.api.client.value = "Value changed";
-console.assert(app.tweeter.api.client.value == app.tweeter.client.value, app.tweeter.api.client.value);
-
-//console.log(JSON.stringify(app, null, 2));
+console.log(app.router('foo'))
+console.log(app.controller.home('bar'))
