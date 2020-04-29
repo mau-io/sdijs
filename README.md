@@ -70,7 +70,7 @@ class App {
 
 $Inject.addSingleton(CONFIG, 'config');
 $Inject.addSingleton(ServiceA);
-$Inject.AddTransient(ServiceB);
+$Inject.addTransient(ServiceB);
 $Inject.addSingleton(App);
 
 // Resolves the dependency graph.
@@ -95,7 +95,7 @@ There are 2 lifetime types available.
 __TRANSIENT:__ The registration is resolved every time it is needed. This means if you resolve a class more than once, you will get back a new instance every time.
 
 ```js
-$Inject.AddTransient(Service);
+$Inject.addTransient(Service);
 ```
 
 __SINGLETON:__ The registration is always reused no matter what - that means that the resolved value is cached in the container.
@@ -123,7 +123,7 @@ const $Inject = new sdijs({
 
 Sets a value in the namespace.
 
-### $AddTransient(value, alias)
+### $addTransient(value, alias)
 
 Sets a value in the namespace.
 

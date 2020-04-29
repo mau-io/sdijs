@@ -25,7 +25,7 @@ module.exports = class DependencyInjection {
     return this.getInjector(module, name);
   }
 
-  AddTransient(service, alias) {
+  addTransient(service, alias) {
     this.register(service, alias, false);
   }
 

@@ -83,13 +83,13 @@ class App {
 }
 
 $Inject.addSingleton(CONFIG_SINGLETON, 'configSingleton');
-$Inject.AddTransient(CONFIG_TRANSIENT, 'configTransient');
+$Inject.addTransient(CONFIG_TRANSIENT, 'configTransient');
 
 $Inject.addSingleton(SingletonClass);
-$Inject.AddTransient(TransientClass);
+$Inject.addTransient(TransientClass);
 
 $Inject.addSingleton(ServiceA);
-$Inject.AddTransient(ServiceB);
+$Inject.addTransient(ServiceB);
 
 // RESOLVE
 $Inject.addSingleton(App);
