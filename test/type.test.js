@@ -119,9 +119,6 @@ describe('Inyection Type Test', () => {
     it('It should be raw values', done => {
       assert.equal(new app.serviceA.singletonClass.entity({id: 1, name:'person', email:'person@email.com'}) instanceof Entity, true);
       assert.equal(new app.serviceA.transientClass.entity({id: 1, name:'person', email:'person@email.com'}) instanceof Entity, true);
-      assert.equal(app.serviceA.singletonClass.entity === Entity, true);
-      assert.equal(app.serviceA.transientClass.entity === Entity, true);
-
       assert.equal(app.serviceA.singletonClass.useCase(), true);
       done();
     });

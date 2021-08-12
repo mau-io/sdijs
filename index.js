@@ -11,6 +11,24 @@ const ANSI = {
   green: '\033[32m',
   blue: '\033[34m',
 }
+
+const selfish = (target) => {
+  const cache = new WeakMap();
+  const handler = {
+    get (target, propertyKey) {
+      const value = Reflect.get(target, propertyKey);
+      if(typeof value !== 'function') {
+        return value;
+      }
+      if(!cache.has(value)) {
+        cache.set(value, value.bind(target));
+      }
+      return cache.get(value);
+    }
+  };
+  const proxy = new Proxy(target, handler);
+  return proxy;
+}
 module.exports = class DependencyInjection {
   
   constructor({verbose = false } = {}) {
@@ -82,9 +100,9 @@ module.exports = class DependencyInjection {
           return singletonInstance;
         } else {
           // Create Instance
-          const newSingletonInstance = this._isClass(module.service) ? 
-            new module.service(paramParser) : 
-            module.service.call(null, paramParser);
+          const newSingletonInstance = this._isClass(module.service)
+            ? selfish(new module.service(paramParser))  // Auto binding
+            : module.service.call(null, paramParser);
           // Save Instance
           this._singletons.set(name, newSingletonInstance);
           // Send Instance
@@ -95,16 +113,16 @@ module.exports = class DependencyInjection {
 
       if(module.mode === 'transient') { 
         // Create and Send Instance
-        return  this._isClass(module.service)   ? 
-                new module.service(paramParser) : 
-                module.service.call(null, paramParser);
+        return  this._isClass(module.service)
+          ? selfish(new module.service(paramParser)) // Auto binding
+          : module.service.call(null, paramParser);
       }
      
     } else {
 
-      return  module.mode === 'singleton'  ? 
-              module.service    : // Send reference object
-              structuredClone(module.service) // Send a deep copy object
+      return  module.mode === 'singleton'
+        ? module.service // Send reference object
+        : structuredClone(module.service) // Send a deep copy object 
     }
     
   }
