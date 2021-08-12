@@ -28,16 +28,31 @@ const CONFIG_TRANSIENT = {
   }
 }
 
+// Function
+const useCase = () => true;
+
+// Entity.js Class
+class Entity {
+  constructor({id, name, email}) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+  }
+}
+
 // TransientClass.js Class
 class TransientClass {
-  constructor() {
+  constructor({entity}) {
+    this.entity = entity;
     this.value = 'original';
   }
 }
 
 // SingletonClass.js Class
 class SingletonClass {
-  constructor() {
+  constructor({entity, useCase}) {
+    this.entity = entity;
+    this.useCase = useCase;
     this.value = 'original';
   }
 }
@@ -87,6 +102,8 @@ $Inject.addTransient(CONFIG_TRANSIENT, 'configTransient');
 
 $Inject.addSingleton(SingletonClass);
 $Inject.addTransient(TransientClass);
+$Inject.addValue(Entity, 'entity');
+$Inject.addValue(useCase, 'useCase');
 
 $Inject.addSingleton(ServiceA);
 $Inject.addTransient(ServiceB);
@@ -98,6 +115,17 @@ const app = $Inject.resolve('app');
 describe('Inyection Type Test', () => {
   
   describe('app tree', () => {
+
+    it('It should be raw values', done => {
+      assert.equal(new app.serviceA.singletonClass.entity({id: 1, name:'person', email:'person@email.com'}) instanceof Entity, true);
+      assert.equal(new app.serviceA.transientClass.entity({id: 1, name:'person', email:'person@email.com'}) instanceof Entity, true);
+      assert.equal(app.serviceA.singletonClass.entity === Entity, true);
+      assert.equal(app.serviceA.transientClass.entity === Entity, true);
+
+      assert.equal(app.serviceA.singletonClass.useCase(), true);
+      done();
+    });
+
     it('It should be same instance', done => {
       assert.equal(app.serviceA.singletonClass === app.serviceB.singletonClass, true);
       assert.equal(app.serviceA.configSingleton === app.serviceB.configSingleton, true);

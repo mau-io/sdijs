@@ -26,6 +26,18 @@ const $Inject = new sdijs({
   verbose: true
 });
 
+// Function
+const useCase = () => true;
+
+// Class
+class Entity {
+  constructor({id, name, email}) {
+    this.id = id;
+    this.name = name;
+    this.email = email;
+  }
+}
+
 const CONFIG = {
   int: 10,
   string: 'foo',
@@ -37,8 +49,9 @@ const CONFIG = {
 }
 
 class ServiceA {
-  constructor({config}) {
+  constructor({config, entity}) {
     this.config = config;
+    this.entity = entity;
   }
   index() {
     return 'index action from ServiceA ' + this.config.int;
@@ -46,8 +59,9 @@ class ServiceA {
 }
 
 class ServiceB {
-   constructor({config}) {
+   constructor({config, useCase}) {
     this.config = config;
+    this.useCase = useCase;
   }
   index() {
     return 'index action from ServiceB ' + this.config.string;
@@ -69,6 +83,8 @@ class App {
 }
 
 $Inject.addSingleton(CONFIG, 'config');
+$Inject.addValue(Entity,  'entity');
+$Inject.addValue(useCase, 'useCase');
 $Inject.addSingleton(ServiceA);
 $Inject.addTransient(ServiceB);
 $Inject.addSingleton(App);
@@ -89,8 +105,8 @@ index action from ServiceA 10
 index action from ServiceB foo
 ```
 
-### Lifetime Types
-There are 2 lifetime types available.
+### Modes Types
+There are 3 types of modes available.
 
 __TRANSIENT:__ The registration is resolved every time it is needed. This means if you resolve a class more than once, you will get back a new instance every time.
 
@@ -102,6 +118,12 @@ __SINGLETON:__ The registration is always reused no matter what - that means tha
 
 ```js
 $Inject.addSingleton(Service);
+```
+
+__VALUE:__ Provide the given value as-is.
+
+```js
+$Inject.addValue(Entity, 'entity');
 ```
 
 # Usage
@@ -127,6 +149,9 @@ Sets a value in the namespace.
 
 Sets a value in the namespace.
 
+### $addValue(value, alias)
+
+Sets a value in the namespace.
 
 ### $resolve(name)
 
