@@ -17,6 +17,7 @@ module.exports = class DependencyInjection {
     this._verbose = verbose;
     this._services = new Map();
     this._singletons = new Map();
+    this._values = new Map();
   }
 
   resolve(name) {
@@ -26,20 +27,24 @@ module.exports = class DependencyInjection {
   }
 
   addTransient(service, alias) {
-    this.register(service, alias, false);
+    this.register(service, alias, 'transient');
   }
 
   addSingleton(service, alias) {
-    this.register(service, alias, true);
+    this.register(service, alias, 'singleton');
   }
 
-  register(service, alias, singleton){
+  addValue(value, alias) {
+    this.register(value, alias, 'value');
+  }
+
+  register(service, alias, mode){
     const type = this._isClass(service) ? 'class' : typeof service;
     const name = alias || this._formatName(service.name);
     this._services.set(name, {
       type, 
       service, 
-      singleton
+      mode
     });
   }
 
@@ -62,9 +67,15 @@ module.exports = class DependencyInjection {
       }
 
     });
+
+    if(module.mode === 'value') { 
+      // Save the value
+      return this._services.get(name).service;
+    }
  
     if(this._isFunction(module.service)) {
-      if(module.singleton) {
+
+      if(module.mode === 'singleton') {
         const singletonInstance = this._singletons.get(name);
 
         if(singletonInstance) {
@@ -80,15 +91,18 @@ module.exports = class DependencyInjection {
           return newSingletonInstance;
         }
   
-      }else{
+      }
+
+      if(module.mode === 'transient') { 
         // Create and Send Instance
         return  this._isClass(module.service)   ? 
                 new module.service(paramParser) : 
                 module.service.call(null, paramParser);
       }
+     
     } else {
 
-      return  module.singleton  ? 
+      return  module.mode === 'singleton'  ? 
               module.service    : // Send reference object
               structuredClone(module.service) // Send a deep copy object
     }
@@ -109,12 +123,17 @@ module.exports = class DependencyInjection {
 
   _log(name, module) {
     try {
-      const T = `${ANSI.blue} [T] ${ANSI.reset}`;
-      const S = `${ANSI.green} [S] ${ANSI.reset}`;
+
+      const icon = {
+        singleton: `${ANSI.green} [S] ${ANSI.reset}`,
+        transient: `${ANSI.blue} [T] ${ANSI.reset}`,
+        value:     `${ANSI.red} [V] ${ANSI.reset}`
+      };
+
       const type = this._services.get(name).type;
-      const from = `${this._services.get(name).singleton ? S : T} (${type}) ${name}`;  
-      const to = `${module.singleton ? S : T} ${module.service.name}`;
-      const arrow =  ANSI.red + '>'.padStart(25 - name.length - this._services.get(name).type.length, '-')
+      const from = `${icon[this._services.get(name).mode]} (${type}) ${name}`;  
+      const to   = `${icon[module.mode]} ${module.service.name}`;
+      const arrow =  ANSI.red + '>'.padStart(30 - name.length - this._services.get(name).type.length, '-')
       console.info(`${from} ${arrow} ${to}`);
     } catch (error) {
       console.error(error);
