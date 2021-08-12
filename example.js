@@ -111,5 +111,5 @@ $Inject.addSingleton(Controller);
 $Inject.addSingleton(App);
 const app = $Inject.resolve('app');
 
-console.log(app.router('foo'))
-console.log(app.controller.home('bar'))
+console.log(app.router('foo'));
+console.log(app.controller.home('bar'));
