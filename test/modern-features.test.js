@@ -841,6 +841,76 @@ describe('SDI v2.0 Modern Features', () => {
       assert.strictEqual(allTags.length >= 50, true);
     });
 
+    it('should handle 50+ services with 100+ tags efficiently (Performance Test)', () => {
+      // Create a clean container for performance testing
+      const perfContainer = createContainer();
+      const startTime = Date.now();
+      
+      // Register 50+ services with multiple tags each to reach 100+ unique tags
+      for (let i = 0; i < 55; i++) {
+        const serviceClass = class {
+          constructor({}) {
+            this.id = i;
+          }
+        };
+        Object.defineProperty(serviceClass, 'name', { value: `Service${i}` });
+        
+        let builder = perfContainer.register(serviceClass, `service${i}`);
+        
+        // Add multiple unique tags per service to ensure 100+ total
+        builder = builder.withTag(`category${i % 10}`);      // 10 unique category tags
+        builder = builder.withTag(`type${i % 15}`);          // 15 unique type tags  
+        builder = builder.withTag(`level${i % 8}`);          // 8 unique level tags
+        builder = builder.withTag(`env${i % 5}`);            // 5 unique env tags
+        if (i % 3 === 0) builder = builder.withTag(`special${i}`);  // ~18 special tags
+        if (i % 2 === 0) builder = builder.withTag(`even${i}`);     // ~27 even tags
+        builder = builder.withTag(`service${i}`);            // 55 unique service tags
+        
+        builder.asSingleton();
+      }
+      
+      const registrationTime = Date.now() - startTime;
+      
+      // Verify we have 50+ services
+      const serviceNames = perfContainer.getServiceNames();
+      assert.strictEqual(serviceNames.length >= 50, true);
+      
+      // Verify we have 100+ unique tags
+      const allTags = perfContainer.getAllTags();
+      const hasEnoughTags = allTags.length >= 100;
+      
+      // Test tag discovery performance
+      const discoveryStartTime = Date.now();
+      
+      // Test various tag queries
+      const categoryServices = perfContainer.getServicesByTags(['category0'], 'AND');
+      const typeServices = perfContainer.getServicesByTags(['type0'], 'AND');
+      const complexQuery = perfContainer.getServicesByTags(['category1', 'type2'], 'OR');
+      const resolvedServices = perfContainer.resolveServicesByTags(['category0'], 'AND');
+      
+      const discoveryTime = Date.now() - discoveryStartTime;
+      
+      console.log(`📊 Performance Test Results:
+        - Services registered: ${serviceNames.length}
+        - Unique tags: ${allTags.length}
+        - Registration time: ${registrationTime}ms
+        - Discovery time: ${discoveryTime}ms`);
+      
+      // Performance assertions - should complete quickly
+      assert.strictEqual(registrationTime < 1000, true, 'Registration should be fast');
+      assert.strictEqual(discoveryTime < 100, true, 'Tag discovery should be fast');
+      
+      // Scale assertions
+      assert.strictEqual(serviceNames.length, 55, 'Should have exactly 55 services');
+      assert.strictEqual(hasEnoughTags, true, `Should have 100+ tags, got ${allTags.length}`);
+      
+      // Functional assertions
+      assert.strictEqual(categoryServices.length > 0, true);
+      assert.strictEqual(typeServices.length > 0, true);
+      assert.strictEqual(complexQuery.length > 0, true);
+      assert.strictEqual(resolvedServices.length > 0, true);
+    });
+
     it('should support tag-based service override scenarios', () => {
       // Use a clean container for this test
       const cleanContainer = createContainer();
