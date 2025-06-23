@@ -1,18 +1,33 @@
 {
   "name": "sdijs",
-  "version": "1.2.0",
-  "description": "Dependency Injection (DI) for NodeJs.",
+  "version": "2.0.0",
+  "description": "Modern Dependency Injection (DI) for Node.js with fluent API and advanced features.",
   "main": "index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "devDependencies": {
-    "mocha": "^6.2.2"
+    "mocha": "^10.2.0",
+    "typescript": "^5.8.3"
   },
   "scripts": {
-    "test": "mocha test --timeout 2s"
+    "test": "mocha test --timeout 5s",
+    "example": "node example.js"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/mau-io/sdijs.git"
   },
+  "keywords": [
+    "dependency-injection",
+    "di",
+    "ioc",
+    "container",
+    "nodejs",
+    "typescript",
+    "modern"
+  ],
   "author": "Maurice T",
   "license": "MIT",
   "bugs": {
