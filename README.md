@@ -539,54 +539,6 @@ class BadService {
 }
 ```
 
-## 🧪 Testing
-
-```bash
-npm test
-```
-
-**Test Results:** 71 tests passing ✅
-- Basic functionality: 8 tests
-- Modern features: 33 tests  
-- Security features: 4 tests
-- Input validation: 6 tests
-- **Tag-based discovery: 17 tests** (including performance test)
-- **Advanced tag integration: 4 tests**
-- **Performance validation: 55 services, 140 tags in <1ms**
-- **Plus:** 8/8 tests passing in examples/testing
-
-Example test with SDI:
-
-```js
-import { expect } from 'chai';
-import { createContainer } from './index.js';
-
-describe('UserService', () => {
-  let container;
-  
-  beforeEach(() => {
-    container = createContainer();
-    
-    // Mock dependencies
-    container
-      .value('config', { apiUrl: 'http://test.api' })
-      .value('logger', { 
-        info: (msg) => console.log(msg),
-        error: (msg) => console.error(msg)
-      })
-      .singleton(MockDatabase)
-      .singleton(UserService);
-  });
-  
-  it('should find user', async () => {
-    const userService = container.resolve('userService');
-    const user = await userService.findUser(123);
-    
-    expect(user).to.be.ok;
-  });
-});
-```
-
 ## 🚀 Migration from v1.x
 
 | Old API (v1.x) | New API (v2.0) | Notes |
@@ -605,14 +557,6 @@ describe('UserService', () => {
 - **Node.js 16+** - Requires modern Node.js
 - **Import syntax** - Must use ES6 imports
 - **New API** - Old `$Inject` global removed
-
-### Migration Steps
-
-1. **Update Node.js** to version 16 or higher
-2. **Convert to ES Modules** - Add `"type": "module"` to package.json
-3. **Update imports** - Change `require()` to `import`
-4. **Update API calls** - Use new fluent API
-5. **Test thoroughly** - Run your test suite
 
 ## 📝 Examples
 
@@ -688,21 +632,6 @@ SDI v2.0 is designed for performance:
 - **🏷️ Fast tag discovery** - Optimized Set operations for tag matching
 - **Scalable architecture** - Performance tested with 55 services and 100+ tags
 - **Quick operations** - Tag discovery <100ms, registration <1000ms
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass: `npm test`
-6. Commit your changes: `git commit -m 'feat: add amazing feature'`
-7. Push to the branch: `git push origin feature/amazing-feature`
-8. Open a Pull Request
-
-## 📄 License
-
-MIT - see [LICENCE.md](LICENCE.md) file for details.
 
 ---
 

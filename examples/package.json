@@ -1,0 +1,58 @@
+{
+  "name": "sdi-examples",
+  "version": "2.0.0",
+  "description": "Comprehensive examples for SDI (Simple Dependency Injection) library",
+  "type": "module",
+  "scripts": {
+    "example:quick": "node 00-quick-start/quick-demo.js",
+    "example:basic": "node 01-basic/simple-di.js",
+    "example:factory": "node 02-advanced/factory-functions.js",
+    "example:scopes": "node 02-advanced/scopes-and-hooks.js",
+    "example:strategy": "node 03-patterns/strategy-pattern.js",
+    "example:decorator": "node 03-patterns/decorator-pattern.js",
+    "example:microservices": "node 04-enterprise/microservices-communication.js",
+    "example:express": "node 05-web-app/express-integration.js",
+    "example:testing": "node 06-testing/mocking-and-testing.js",
+    "example:tags": "node 07-advanced/tag-discovery.js",
+    "example:microservices-arch": "node 08-real-world/microservices-architecture.js",
+    "example:plugin-system": "node 08-real-world/plugin-system.js",
+    "example:environment-mgmt": "node 08-real-world/environment-management.js",
+    "example:performance-analysis": "node 08-real-world/performance-analysis.js",
+    "example:health-monitoring": "node 08-real-world/health-monitoring.js",
+    "example:tag-aware-services": "node 08-real-world/tag-aware-services.js",
+    "example:real-world-all": "npm run example:microservices-arch && npm run example:plugin-system && npm run example:environment-mgmt && npm run example:performance-analysis && npm run example:health-monitoring && npm run example:tag-aware-services",
+    "example:all": "npm run example:quick && npm run example:basic && npm run example:factory && npm run example:scopes && npm run example:strategy && npm run example:decorator && npm run example:microservices && npm run example:express && npm run example:testing && npm run example:tags && npm run example:real-world-all",
+    "demo": "npm run example:quick",
+    "test-examples": "npm run example:testing",
+    "test": "cd .. && npm test"
+  },
+  "keywords": [
+    "dependency-injection",
+    "di",
+    "ioc",
+    "examples",
+    "patterns",
+    "microservices",
+    "testing",
+    "express",
+    "enterprise"
+  ],
+  "author": "SDI Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mau-io/sdijs.git",
+    "directory": "examples"
+  },
+  "bugs": {
+    "url": "https://github.com/mau-io/sdijs/issues"
+  },
+  "homepage": "https://github.com/mau-io/sdijs/tree/master/examples#readme"
+} 
