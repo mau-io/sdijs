@@ -1,6 +1,6 @@
 {
   "name": "sdijs",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Modern Dependency Injection (DI) for Node.js with fluent API and advanced features.",
   "main": "index.js",
   "type": "module",
