@@ -1,7 +1,7 @@
-const assert = require('assert');
-const sdijs = require("../index.js");
+import assert from 'assert';
+import SDI from '../index.js';
 
-const $Inject = new sdijs({
+const container = new SDI({
   verbose: true
 });
 
@@ -99,17 +99,17 @@ class App {
   }
 }
 
-$Inject.addSingleton(CONFIG, 'config');
-$Inject.addSingleton(utils, 'utils');
-$Inject.addSingleton(HttpClient);
-$Inject.addSingleton(Database);
-$Inject.addSingleton(Repository);
-$Inject.addSingleton(Service);
-$Inject.addSingleton(Controller);
+container
+  .value('config', CONFIG)
+  .factory('utils', utils).asSingleton()
+  .singleton(HttpClient)
+  .singleton(Database)
+  .singleton(Repository)
+  .singleton(Service)
+  .singleton(Controller)
+  .singleton(App);
 
-// RESOLVE
-$Inject.addSingleton(App);
-const app = $Inject.resolve('app');
+const app = container.resolve('app');
 
 describe('Inyection Test', () => {
   

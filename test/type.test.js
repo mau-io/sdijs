@@ -1,7 +1,7 @@
-const assert = require('assert');
-const sdijs = require("../index.js");
+import assert from 'assert';
+import SDI from '../index.js';
 
-const $Inject = new sdijs({
+const container = new SDI({
   verbose: true
 });
 
@@ -97,20 +97,18 @@ class App {
   }
 }
 
-$Inject.addSingleton(CONFIG_SINGLETON, 'configSingleton');
-$Inject.addTransient(CONFIG_TRANSIENT, 'configTransient');
+container
+  .singleton('configSingleton', () => CONFIG_SINGLETON)
+  .transient('configTransient', () => CONFIG_TRANSIENT)
+  .singleton(SingletonClass)
+  .transient(TransientClass)
+  .value('entity', Entity)
+  .value('useCase', useCase)
+  .singleton(ServiceA)
+  .transient(ServiceB)
+  .singleton(App);
 
-$Inject.addSingleton(SingletonClass);
-$Inject.addTransient(TransientClass);
-$Inject.addValue(Entity, 'entity');
-$Inject.addValue(useCase, 'useCase');
-
-$Inject.addSingleton(ServiceA);
-$Inject.addTransient(ServiceB);
-
-// RESOLVE
-$Inject.addSingleton(App);
-const app = $Inject.resolve('app');
+const app = container.resolve('app');
 
 describe('Inyection Type Test', () => {
   
