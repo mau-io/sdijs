@@ -2,6 +2,8 @@
  * SDI v2.0 Example - Modern API with maintained {a,b,c} destructuring
  */
 
+// For local development, use relative import
+// For production usage, use: import { createContainer } from 'sdijs';
 import { createContainer } from './index.js';
 
 // ============ SAMPLE SERVICES ============

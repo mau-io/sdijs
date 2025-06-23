@@ -5,6 +5,7 @@
  * Perfect for getting started quickly!
  */
 
+// For production usage: import { createContainer } from 'sdijs';
 import { createContainer } from '../../index.js';
 
 console.log('🚀 SDI Quick Demo Starting...\n');

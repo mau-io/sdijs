@@ -8,6 +8,7 @@
  * - The elegant destructuring syntax
  */
 
+// For production usage: import { createContainer } from 'sdijs';
 import { createContainer } from '../../index.js';
 
 // Create a container

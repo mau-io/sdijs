@@ -8,6 +8,7 @@
  * - Service discovery by tags
  */
 
+// For production usage: import { createContainer } from 'sdijs';
 import { createContainer } from '../../index.js';
 
 const container = createContainer();

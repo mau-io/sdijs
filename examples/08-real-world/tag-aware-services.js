@@ -5,6 +5,7 @@
  * and discover other services by tags to modify their behavior dynamically.
  */
 
+// For production usage: import SDI from 'sdijs';
 import SDI from '../../index.js';
 
 // ============ BASE TAG-AWARE SERVICE ============

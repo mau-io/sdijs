@@ -36,7 +36,10 @@ The Dependency Injection pattern separates object instantiation from business lo
 ## 📦 Installation
 
 ```bash
-# Clone the repository
+# Install from npm (recommended)
+npm install sdijs
+
+# Or clone the repository for development
 git clone https://github.com/mau-io/sdijs.git
 cd sdijs
 
@@ -55,7 +58,7 @@ node example.js
 ## 🎯 Quick Start
 
 ```js
-import SDI, { createContainer } from './index.js'; // For local development
+import SDI, { createContainer } from 'sdijs';
 
 // Create container with modern API - RECOMMENDED
 const container = createContainer({ 
@@ -108,7 +111,7 @@ const user = await userService.findUser(123);
 ### 🏗️ Container Creation
 
 ```js
-import SDI, { createContainer } from './index.js';
+import SDI, { createContainer } from 'sdijs';
 
 // Method 1: Constructor
 const container = new SDI({
@@ -547,7 +550,7 @@ class BadService {
 | `$Inject.addSingleton()` | `container.singleton()` | Fluent API |
 | `$Inject.addTransient()` | `container.transient()` | Fluent API |
 | `$Inject.addValue()` | `container.value()` | Fluent API |
-| `require('sdijs')` | `import SDI from './index.js'` | ES Modules |
+| `require('sdijs')` | `import SDI from 'sdijs'` | ES Modules |
 
 **Good news:** Your service classes with `{destructuring}` need **zero changes**! 🎉
 
@@ -564,13 +567,21 @@ class BadService {
 Check out [`example.js`](./example.js) for a comprehensive demonstration of all features:
 
 ```bash
+# If you cloned the repository
 node example.js
+
+# If you installed via npm, create your own example file with:
+# import { createContainer } from 'sdijs';
+# (See Quick Start section for complete example)
 ```
 
 ### Comprehensive Examples Directory
 Explore the [`examples/`](./examples/) directory with 9 specialized examples:
 
+> **Note**: Examples use relative imports (`from '../../index.js'`) since they run from the repository. In your projects, use `from 'sdijs'` instead.
+
 ```bash
+# If you cloned the repository
 cd examples
 
 # Run individual examples
@@ -604,7 +615,7 @@ The examples include:
 Full TypeScript support included with `index.d.ts`:
 
 ```typescript
-import SDI, { SDIOptions, ServiceBuilder, LIFECYCLE } from './index.js';
+import SDI, { SDIOptions, ServiceBuilder, LIFECYCLE } from 'sdijs';
 
 interface IUserService {
   findUser(id: number): Promise<User>;
