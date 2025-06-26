@@ -652,27 +652,18 @@ class SDI {
 
   _isClass(definition) {
     if (typeof definition !== 'function') return false;
-    
-    // Multiple detection methods for robustness
-    try {
-      // Method 1: Check if it has a prototype with constructor
-      if (definition.prototype && definition.prototype.constructor === definition) {
-        // Method 2: Try to call without 'new' - classes will throw
-        try {
-          definition();
-          return false; // If it doesn't throw, it's likely a regular function
-        } catch (e) {
-          // If it throws with specific class error, it's a class
-          return e.message && e.message.includes('Class constructor');
-        }
-      }
-      
-      // Method 3: String inspection as fallback (less reliable with minification)
-      const str = definition.toString();
-      return /^class\s/.test(str) || /^function\s+[A-Z]/.test(str);
-    } catch {
-      return false;
-    }
+  
+    // Use string representation to avoid executing arbitrary code
+    const str = definition.toString();
+  
+    // Check for native class syntax
+    if (/^class\s/.test(str)) return true;
+  
+    // Heuristic for functions intended as classes (e.g., transpiled classes)
+    // Check for function keyword, capitalized name, and a valid prototype
+    return /^\s*function\s+[A-Z]/.test(str) &&
+           definition.prototype &&
+           definition.prototype.constructor === definition;
   }
 
   _formatName(name) {
@@ -688,8 +679,6 @@ class SDI {
       }
     });
   }
-
-
 
   _checkMemoryLimits(type) {
     const limits = {
