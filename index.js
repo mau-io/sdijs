@@ -721,42 +721,38 @@ class ServiceBuilder {
 
   /**
    * Set as singleton lifecycle
-   * @returns {ServiceBuilder} For chaining
+   * @returns {SDI} Container for method chaining
    */
   asSingleton() {
     this.lifecycle = LIFECYCLE.SINGLETON;
-    this._register();
-    return this;
+    return this._register();
   }
 
   /**
    * Set as transient lifecycle
-   * @returns {ServiceBuilder} For chaining
+   * @returns {SDI} Container for method chaining
    */
   asTransient() {
     this.lifecycle = LIFECYCLE.TRANSIENT;
-    this._register();
-    return this;
+    return this._register();
   }
 
   /**
    * Set as scoped lifecycle
-   * @returns {ServiceBuilder} For chaining
+   * @returns {SDI} Container for method chaining
    */
   asScoped() {
     this.lifecycle = LIFECYCLE.SCOPED;
-    this._register();
-    return this;
+    return this._register();
   }
 
   /**
    * Set as value (no instantiation)
-   * @returns {ServiceBuilder} For chaining
+   * @returns {SDI} Container for method chaining
    */
   asValue() {
     this.lifecycle = LIFECYCLE.VALUE;
-    this._register();
-    return this;
+    return this._register();
   }
 
   /**
