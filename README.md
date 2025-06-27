@@ -1,37 +1,49 @@
-# SDI v2.0 🚀
+# SDIJS v2.1 🚀
 
-**Modern Dependency Injection for Node.js** - A powerful, enterprise-ready DI container with fluent API while maintaining the elegant `{a,b,c}` destructuring syntax.
+**Modern Dependency Injection for Node.js** - A powerful, enterprise-ready DI container with fluent API, decorators, and universal validation while maintaining the elegant `{a,b,c}` destructuring syntax.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/mau-io/sdijs)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/mau-io/sdijs)
 [![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org/)
 [![ES Modules](https://img.shields.io/badge/ES-Modules-yellow.svg)](https://nodejs.org/api/esm.html)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-71%20passing-brightgreen.svg)](#-testing)
-[![Examples](https://img.shields.io/badge/examples-9%20working-green.svg)](#-examples)
-[![Security](https://img.shields.io/badge/security-hardened-red.svg)](#-security-features)
+[![Tests](https://img.shields.io/badge/tests-112%20passing-brightgreen.svg)](#testing)
+[![Examples](https://img.shields.io/badge/examples-10%20working-green.svg)](#examples)
+[![Security](https://img.shields.io/badge/security-hardened-red.svg)](#security-features)
 
-## ✨ Features
+## Features
 
-✅ **Fluent/Chainable API** - Modern, readable service registration  
-✅ **Destructuring Support** - Keep your elegant `{service, config}` syntax  
-✅ **🏷️ Tag-based Discovery** - Find services by tags with AND/OR logic  
-✅ **Scoped Dependencies** - Request/session scoped services  
-✅ **Factory Functions** - With full dependency injection  
-✅ **Circular Dependency Detection** - Automatic detection and helpful errors  
-✅ **Lifecycle Hooks** - beforeCreate, afterCreate, etc.  
-✅ **TypeScript Ready** - Full type definitions included  
-✅ **Zero Dependencies** - Lightweight and secure  
-✅ **Enterprise Ready** - Plugin systems, layered architecture, strategy patterns  
-✅ **Security Hardened** - Prototype pollution protection & memory limits  
+**Core DI Features:**
+- **Fluent/Chainable API** - Modern, readable service registration  
+- **Destructuring Support** - Keep your elegant `{service, config}` syntax  
+- **Tag-based Discovery** - Find services by tags with AND/OR logic  
+- **Scoped Dependencies** - Request/session scoped services  
+- **Factory Functions** - With full dependency injection  
+- **Circular Dependency Detection** - Automatic detection and helpful errors  
+- **Lifecycle Hooks** - beforeCreate, afterCreate, etc.  
+
+**NEW in v2.1 - Advanced Decorator System:**
+- **Service Decorators** - Services that decorate other services with DI
+- **Custom Function Decorators** - Flexible function-based decoration
+- **Universal Method Validation** - Works with ANY method names automatically
+- **Batch Registration** - Declarative service configuration
+- **Interface Preservation** - Automatic validation of service interfaces
+- **Smart Error Detection** - Intelligent signature change warnings
+
+**Enterprise Features:**
+- **TypeScript Ready** - Full type definitions included  
+- **Zero Dependencies** - Lightweight and secure  
+- **Security Hardened** - Prototype pollution protection & memory limits
+- **Verbose Logging** - Clear `[SDIJS:CATEGORY]` logging for debugging
+- **Performance Optimized** - Efficient caching and tag discovery
 
 ### Why Dependency Injection?
 
 The Dependency Injection pattern separates object instantiation from business logic, providing:
 
-- **🔍 Explicit dependencies** - Clear understanding of service relationships
-- **♻️ Code reuse** - Services decoupled from specific implementations  
-- **🧪 Easy testing** - Mock dependencies effortlessly
-- **🏗️ Better architecture** - Clean, maintainable code structure
+- **Explicit dependencies** - Clear understanding of service relationships
+- **Code reuse** - Services decoupled from specific implementations  
+- **Easy testing** - Mock dependencies effortlessly
+- **Better architecture** - Clean, maintainable code structure
 
 ## 📦 Installation
 
@@ -58,9 +70,9 @@ node example.js
 ## 🎯 Quick Start
 
 ```js
-import SDI, { createContainer } from 'sdijs';
+import { createContainer } from 'sdijs';
 
-// Create container with modern API - RECOMMENDED
+// Create container with modern API
 const container = createContainer({ 
   verbose: true, 
   autoBinding: true,
@@ -91,7 +103,7 @@ class UserService {
   }
 }
 
-// ✨ NEW FLUENT API - Much more powerful!
+// Fluent API - Much more powerful!
 container
   .value('config', { dbUrl: 'postgresql://...' })
   .factory('logger', ({config}) => ({
@@ -106,30 +118,176 @@ const userService = container.resolve('userService');
 const user = await userService.findUser(123);
 ```
 
-## 📚 API Reference
+## 🎨 Decorator System (NEW in v2.1)
 
-### 🏗️ Container Creation
+The decorator system allows you to add cross-cutting concerns like logging, caching, and metrics to any service without modifying the original code.
+
+### Basic Decorator Usage
 
 ```js
-import SDI, { createContainer } from 'sdijs';
+// Create decorator services
+class LoggingDecorator {
+  decorate(serviceInstance) {
+    return {
+      ...serviceInstance, // Preserve all properties
+      findUser: async (id) => {
+        console.log(`Finding user ${id}`);
+        const result = await serviceInstance.findUser(id);
+        console.log(`User ${id} found`);
+        return result;
+      }
+    };
+  }
+}
 
-// Method 1: Constructor
-const container = new SDI({
+class TimingDecorator {
+  decorate(serviceInstance) {
+    return {
+      ...serviceInstance,
+      findUser: async (id) => {
+        const start = Date.now();
+        const result = await serviceInstance.findUser(id);
+        console.log(`findUser took ${Date.now() - start}ms`);
+        return result;
+      }
+    };
+  }
+}
+
+// Register decorators and apply them
+container
+  .register(LoggingDecorator, 'loggingDecorator').asSingleton()
+  .register(TimingDecorator, 'timingDecorator').asSingleton()
+  .register(UserService, 'userService')
+  .decorateWith(['loggingDecorator', 'timingDecorator'])
+  .asSingleton();
+```
+
+### Batch Registration
+
+Register multiple services with decorators using declarative configuration:
+
+```js
+const serviceConfigs = [
+  {
+    class: OrderService,
+    name: 'orderService',
+    decorators: ['logging', 'metrics', 'cache'],
+    lifecycle: 'singleton',
+    tags: ['business', 'critical']
+  },
+  {
+    class: UserService,
+    name: 'userService', 
+    decorators: ['logging', 'metrics'],
+    lifecycle: 'singleton',
+    tags: ['business', 'user']
+  },
+  {
+    class: ReportingService,
+    name: 'reportingService',
+    decorators: ['logging', 'cache'],
+    lifecycle: 'singleton',
+    tags: ['analytics', 'heavy']
+  }
+];
+
+container.batchRegister(serviceConfigs);
+```
+
+### Custom Function Decorators
+
+For more flexibility, use custom function decorators:
+
+```js
+const cacheDecorator = (serviceInstance) => {
+  const cache = new Map();
+  
+  return {
+    ...serviceInstance,
+    findUser: async (id) => {
+      if (cache.has(id)) {
+        return cache.get(id);
+      }
+      
+      const result = await serviceInstance.findUser(id);
+      cache.set(id, result);
+      return result;
+    }
+  };
+};
+
+container
+  .register(UserService, 'userService')
+  .decorate(cacheDecorator)
+  .decorateWith(['logging'])  // Mix function and service decorators
+  .asSingleton();
+```
+
+### Smart Decorators with Dependency Injection
+
+Decorators can receive their own dependencies:
+
+```js
+class UniversalCacheDecorator {
+  constructor({ cache, logger }) {
+    this.cache = cache;
+    this.logger = logger;
+  }
+
+  decorate(serviceInstance) {
+    const decoratedMethods = {};
+    
+    // Get ALL public methods dynamically
+    const publicMethods = this._getPublicMethods(serviceInstance);
+    
+    for (const methodName of publicMethods) {
+      const originalMethod = serviceInstance[methodName].bind(serviceInstance);
+      decoratedMethods[methodName] = async (...args) => {
+        const cacheKey = `${serviceInstance.constructor.name}.${methodName}:${JSON.stringify(args)}`;
+        
+        const cached = await this.cache.get(cacheKey);
+        if (cached) {
+          this.logger.info(`Cache hit for ${methodName}`);
+          return cached;
+        }
+        
+        const result = await originalMethod(...args);
+        await this.cache.set(cacheKey, result);
+        return result;
+      };
+    }
+
+    return { ...serviceInstance, ...decoratedMethods };
+  }
+  
+  _getPublicMethods(serviceInstance) {
+    // Implementation to discover all public methods
+    // Works with ANY method names automatically
+  }
+}
+```
+
+## 📚 API Reference
+
+### Container Creation
+
+```js
+import { createContainer } from 'sdijs';
+
+// Factory function (RECOMMENDED)
+const container = createContainer({
   verbose: false,        // Enable/disable logging
   autoBinding: true,     // Auto-bind class methods
   strictMode: false,     // Strict registration rules
-  allowOverrides: false, // Allow service overrides
   maxServices: 1000,     // Memory limit for services
   maxInstances: 5000,    // Memory limit for instances
   maxScopes: 100,        // Memory limit for scopes
   maxHooksPerEvent: 50   // Memory limit for hooks
 });
-
-// Method 2: Factory function (RECOMMENDED)
-const container = createContainer({ verbose: true });
 ```
 
-### 🔧 Service Registration
+### Service Registration
 
 #### Fluent Registration API
 
@@ -152,18 +310,24 @@ container.factory('emailService', ({config, logger}) => {
   return {
     send: async (to, subject, body) => {
       logger.info(`Sending email to ${to}`);
-      // Implementation here
       return { sent: true, to, subject };
     }
   };
 }).asSingleton();
 
-// Multiple service registration
-container.registerAll({
-  config: configObject,
-  logger: loggerInstance,
-  cache: cacheService
-});
+// Decorator registration
+container
+  .register(UserService, 'userService')
+  .decorateWith(['loggingDecorator', 'cachingDecorator'])
+  .decorate(customTimingDecorator)
+  .withTags('business', 'critical')
+  .asSingleton();
+
+// Batch registration
+container.batchRegister([
+  { class: OrderService, name: 'orderService', decorators: ['logging'] },
+  { class: UserService, name: 'userService', decorators: ['logging', 'cache'] }
+]);
 ```
 
 #### Service Lifecycles
@@ -175,7 +339,7 @@ container.registerAll({
 | **Scoped** | One instance per scope | `.register().asScoped()` |
 | **Value** | Direct value, no instantiation | `.value()` |
 
-### 🎯 Service Resolution
+### Service Resolution
 
 ```js
 // Basic resolution
@@ -190,11 +354,11 @@ const {database, logger, config} = container.resolveAll([
 const getUserService = container.getResolver('userService');
 const service = getUserService(); // Resolved when called
 
-// Scoped resolution (see Scopes section)
+// Scoped resolution
 const requestService = requestScope.resolve('requestService');
 ```
 
-### 🔄 Scoped Dependencies
+### Scoped Dependencies
 
 Perfect for web applications with request/session-specific data:
 
@@ -222,14 +386,11 @@ const ctx1 = requestScope.resolve('requestContext');
 const ctx2 = requestScope.resolve('requestContext');
 console.log(ctx1 === ctx2); // true - same instance within scope
 
-const ctx3 = sessionScope.resolve('requestContext');
-console.log(ctx1 === ctx3); // false - different scope
-
 // Clean up when done
 requestScope.dispose();
 ```
 
-### 🪝 Lifecycle Hooks
+### Lifecycle Hooks
 
 ```js
 container
@@ -238,23 +399,15 @@ container
   })
   .hook('afterCreate', ({service, instance}) => {
     console.log(`Created ${service.name}`);
-  })
-  .hook('beforeResolve', ({name}) => {
-    console.log(`Resolving ${name}`);
-  })
-  .hook('afterResolve', ({name, result}) => {
-    console.log(`Resolved ${name}`);
   });
 
 // Clean up hooks when needed
 container.clearHooks('beforeCreate');
 ```
 
-### 🏷️ Advanced Features
+### Tag-based Service Discovery
 
-#### Service Tags & Discovery
-
-**🔥 NEW in v2.0:** Tag-based service discovery enables powerful architectural patterns like plugin systems, environment-specific services, and layered architectures.
+Tag-based service discovery enables powerful architectural patterns like plugin systems, environment-specific services, and layered architectures:
 
 ```js
 // Register services with multiple tags
@@ -281,7 +434,7 @@ container
   .withTag('memory')
   .asSingleton();
 
-// ✨ POWERFUL TAG-BASED SERVICE DISCOVERY
+// POWERFUL TAG-BASED SERVICE DISCOVERY
 
 // 1. Find services with ALL specified tags (AND mode - default)
 const prodRepositories = container.getServicesByTags(['repository', 'production']);
@@ -310,7 +463,7 @@ console.log(grouped.repository); // ['databaseRepository', 'apiRepository']
 console.log(grouped.cache);      // ['cacheService']
 ```
 
-**📊 Tag Discovery Methods:**
+**Tag Discovery Methods:**
 
 | Method | Purpose | Returns |
 |--------|---------|---------|
@@ -320,12 +473,12 @@ console.log(grouped.cache);      // ['cacheService']
 | `getAllTags()` | All unique tags | `string[]` (sorted) |
 | `getServicesByTag()` | Services grouped by tag | `Record<string, string[]>` |
 
-#### 🎯 Real-World Tag Use Cases
+#### Real-World Tag Use Cases
 
-Tags enable enterprise-grade architectural patterns. Here are 5 powerful use cases:
+Tags enable enterprise-grade architectural patterns:
 
 ```js
-// 🌍 1. ENVIRONMENT-SPECIFIC SERVICES
+// 1. ENVIRONMENT-SPECIFIC SERVICES
 // Register different implementations for different environments
 container.register(MockPaymentService).withTags('payment', 'development').asSingleton();
 container.register(StripePaymentService).withTags('payment', 'production').asSingleton();
@@ -337,7 +490,7 @@ const env = process.env.NODE_ENV || 'development';
 const paymentService = container.getServicesByTags(['payment', env])[0];
 const emailServices = container.resolveServicesByTags(['email', env]);
 
-// 🏗️ 2. LAYERED ARCHITECTURE
+// 2. LAYERED ARCHITECTURE
 // Organize services by architectural layers
 container.register(UserRepository).withTags('repository', 'data-layer').asSingleton();
 container.register(ProductRepository).withTags('repository', 'data-layer').asSingleton();
@@ -349,7 +502,7 @@ container.register(UserController).withTags('controller', 'presentation-layer').
 const dataLayer = container.resolveServicesByTags(['data-layer']);
 const businessLayer = container.resolveServicesByTags(['business-layer']);
 
-// 🔌 3. PLUGIN SYSTEM
+// 3. PLUGIN SYSTEM
 // Dynamic plugin discovery and initialization
 container.register(AuthPlugin).withTags('plugin', 'security').asSingleton();
 container.register(LoggingPlugin).withTags('plugin', 'monitoring').asSingleton();
@@ -362,10 +515,7 @@ plugins.forEach(plugin => {
   plugin.instance.initialize();
 });
 
-// Load specific plugin categories
-const securityPlugins = container.resolveServicesByTags(['plugin', 'security']);
-
-// ⚡ 4. STRATEGY PATTERN IMPLEMENTATION
+// 4. STRATEGY PATTERN IMPLEMENTATION
 // Multiple payment strategies
 container.register(CreditCardPayment).withTags('payment', 'strategy', 'card').asSingleton();
 container.register(PayPalPayment).withTags('payment', 'strategy', 'paypal').asSingleton();
@@ -377,28 +527,9 @@ console.log(`Available payment methods: ${allPaymentStrategies.map(s => s.name).
 
 // Get specific payment type
 const cardPayments = container.resolveServicesByTags(['payment', 'card']);
-
-// 🚩 5. FEATURE FLAGS AND CAPABILITIES
-// Conditional feature loading
-container.register(BasicAnalytics).withTags('analytics', 'basic').asSingleton();
-container.register(AdvancedAnalytics).withTags('analytics', 'premium').asSingleton();
-container.register(MonitoringService).withTags('monitoring', 'optional').asSingleton();
-container.register(A11yService).withTags('accessibility', 'optional').asSingleton();
-
-// Load features based on subscription level
-const userTier = 'premium'; // from user session
-const analytics = container.getServicesByTags(['analytics', userTier]);
-
-// Load optional features if enabled
-const optionalFeatures = container.resolveServicesByTags(['optional']);
-optionalFeatures.forEach(feature => {
-  if (isFeatureEnabled(feature.name)) {
-    feature.instance.enable();
-  }
-});
 ```
 
-**💡 Pro Tips for Tag Usage:**
+**Pro Tips for Tag Usage:**
 
 - **Use hierarchical tags**: `['service', 'user-service']` for better organization
 - **Combine environment + feature**: `['cache', 'redis', 'production']`
@@ -406,7 +537,7 @@ optionalFeatures.forEach(feature => {
 - **Group by capability**: `['serializer', 'json']`, `['serializer', 'xml']`
 - **Version your APIs**: `['api', 'v1']`, `['api', 'v2']`
 
-#### Conditional Registration
+### Conditional Registration
 
 ```js
 container
@@ -420,32 +551,16 @@ container
   .asSingleton();
 ```
 
-#### Service Overrides
-
-```js
-// Strict mode prevents accidental overrides
-const strictContainer = createContainer({ strictMode: true });
-
-strictContainer.singleton(Service, 'myService');
-strictContainer.singleton(NewService, 'myService'); // ❌ Throws error
-
-// Explicit override
-strictContainer
-  .register(NewService, 'myService')
-  .override()
-  .asSingleton(); // ✅ Works
-```
-
 ## 🔒 Security Features
 
-SDI v2.0 includes enterprise-grade security features:
+SDIJS includes enterprise-grade security features:
 
 ```js
 // Prototype pollution protection
 class VulnerableService {
   constructor(deps) {
-    deps.__proto__; // ❌ Throws: Dangerous property access blocked
-    deps.constructor; // ❌ Throws: Dangerous property access blocked
+    deps.__proto__; // Throws: Dangerous property access blocked
+    deps.constructor; // Throws: Dangerous property access blocked
   }
 }
 
@@ -458,16 +573,16 @@ const limitedContainer = createContainer({
 });
 
 // Input validation on all methods
-container.value('', 'test'); // ❌ Throws: Service name must be a non-empty string
-container.factory('test', 'not-a-function'); // ❌ Throws: Factory must be a function
+container.value('', 'test'); // Throws: Service name must be non-empty
+container.factory('test', 'not-a-function'); // Throws: Factory must be a function
 ```
 
 ## 💎 Destructuring Support
 
-The key feature that makes SDI special - **your destructuring syntax remains unchanged**:
+The key feature that makes SDIJS special - **your destructuring syntax remains unchanged**:
 
 ```js
-// ✅ All of these still work exactly the same!
+// All of these still work exactly the same!
 
 class UserService {
   constructor({database, logger, config, emailService}) {
@@ -513,28 +628,35 @@ container.clearHooks('beforeCreate');   // Remove all hooks for event
 
 ## 🔍 Error Handling & Debugging
 
-SDI v2.0 provides helpful error messages:
+SDIJS provides helpful error messages and verbose logging:
 
 ```js
-// ❌ Service not found
+// Verbose logging with clear categories
+const container = createContainer({ verbose: true });
+
+// Logs show clear categories:
+// [SDIJS:REGISTER] Service 'userService' [singleton] with decorators
+// [SDIJS:RESOLVE] Resolving dependency: database
+// [SDIJS:DECORATOR] Applied decorator 'logging' to service 'userService'
+// [SDIJS:VALIDATION] Decorator 'logging' successfully preserved service interface...
+
+// Service not found
 container.resolve('nonExistent');
 // Error: Service 'nonExistent' not found. Did you forget to register it?
 
-// ❌ Circular dependency
+// Circular dependency
 container.singleton(ServiceA).singleton(ServiceB);
 // Error: Circular dependency detected: serviceA → serviceB → serviceA
 
-// ❌ Read-only dependencies
-class Service {
-  constructor(deps) {
-    deps.someValue = 'test'; // Error: Dependencies are read-only
-  }
-}
+// Decorator validation errors
+// Error: Decorator 'badDecorator' removed public method(s) from service 'userService': findUser
+// Warning: Decorator 'timingDecorator' changed 'findUser' method signature. Original: 1 params, Decorated: 3 params
 
-// ❌ Memory limits exceeded
-container.value('service1000', {}); // Error: Memory limit exceeded for services. Max: 1000
+// Memory limits exceeded
+container.value('service1000', {}); 
+// Error: Memory limit exceeded for services. Max: 1000
 
-// ❌ Security violations
+// Security violations
 class BadService {
   constructor(deps) {
     deps.__proto__; // Error: Dangerous property access blocked: '__proto__'
@@ -542,80 +664,54 @@ class BadService {
 }
 ```
 
-## 🚀 Migration from v1.x
+## 🚀 Migration from v2.0
 
-| Old API (v1.x) | New API (v2.0) | Notes |
-|----------------|----------------|-------|
-| `new sdijs()` | `createContainer()` | Recommended factory |
-| `$Inject.addSingleton()` | `container.singleton()` | Fluent API |
-| `$Inject.addTransient()` | `container.transient()` | Fluent API |
-| `$Inject.addValue()` | `container.value()` | Fluent API |
-| `require('sdijs')` | `import SDI from 'sdijs'` | ES Modules |
+**New Features in v2.1 (Non-breaking):**
+- Service decorators with `.decorateWith()` and `.decorate()`
+- Universal method validation (works with any method names)
+- Batch registration with `container.batchRegister()`
+- Enhanced verbose logging with clear categories
+- Interface preservation validation
+- Smart signature change detection
 
-**Good news:** Your service classes with `{destructuring}` need **zero changes**! 🎉
-
-### Breaking Changes in v2.0
-
-- **ES Modules only** - No more CommonJS support
-- **Node.js 16+** - Requires modern Node.js
-- **Import syntax** - Must use ES6 imports
-- **New API** - Old `$Inject` global removed
+**Your existing v2.0 code works unchanged!**
 
 ## 📝 Examples
 
 ### Main Example
-Check out [`example.js`](./example.js) for a comprehensive demonstration of all features:
-
-```bash
-# If you cloned the repository
-node example.js
-
-# If you installed via npm, create your own example file with:
-# import { createContainer } from 'sdijs';
-# (See Quick Start section for complete example)
-```
+Check out [`example.js`](./example.js) for a comprehensive demonstration of all features.
 
 ### Comprehensive Examples Directory
-Explore the [`examples/`](./examples/) directory with 9 specialized examples:
-
-> **Note**: Examples use relative imports (`from '../../index.js'`) since they run from the repository. In your projects, use `from 'sdijs'` instead.
+Explore the [`examples/`](./examples/) directory with specialized examples:
 
 ```bash
 # If you cloned the repository
 cd examples
 
 # Run individual examples
-npm run example:basic        # Basic DI concepts
-npm run example:factory      # Factory functions
-npm run example:scopes       # Scoped dependencies & hooks
-npm run example:strategy     # Strategy pattern with tags
-npm run example:decorator    # Decorator pattern
-npm run example:microservices # Enterprise microservices
-npm run example:express      # Express.js integration
-npm run example:testing      # Testing with mocks (8/8 tests pass)
-npm run example:tags         # Advanced tag-based discovery
-
-# Run all examples at once
-npm run example:all
+node 01-basic/simple-di.js              # Basic DI concepts
+node 02-advanced/factory-functions.js   # Factory functions
+node 02-advanced/scopes-and-hooks.js    # Scoped dependencies & hooks
+node 03-patterns/strategy-pattern.js    # Strategy pattern with tags
+node 03-patterns/decorator-pattern.js   # Decorator pattern
+node 04-enterprise/microservices-communication.js # Enterprise microservices
+node 05-web-app/express-integration.js  # Express.js integration
+node 06-testing/mocking-and-testing.js  # Testing with mocks
+node 07-advanced/tag-discovery.js       # Advanced tag-based discovery
+node 09-decorators/basic-decorator-usage.js        # NEW: Basic decorators
+node 09-decorators/advanced-decorator-features.js  # NEW: Advanced decorators
 ```
 
-The examples include:
-- Basic service registration and resolution
-- Scoped dependencies and lifecycle hooks
-- Factory functions with full DI
-- Design patterns (Strategy, Decorator)
-- Enterprise patterns (Microservices communication)
-- Web application integration (Express.js)
-- Comprehensive testing with mocks
-- **🏷️ Advanced tag-based service discovery** (NEW!)
-- Security features demonstration
+**NEW Decorator Examples:**
+- **Basic Decorator Usage** - Simple logging, timing, and caching decorators
+- **Advanced Decorator Features** - Universal validation, batch registration, enterprise patterns
 
 ## 🔗 TypeScript
 
-Full TypeScript support included with `index.d.ts`:
+Full TypeScript support included with comprehensive type definitions:
 
 ```typescript
-import SDI, { SDIOptions, ServiceBuilder, LIFECYCLE } from 'sdijs';
+import { createContainer, ServiceConfig } from 'sdijs';
 
 interface IUserService {
   findUser(id: number): Promise<User>;
@@ -627,23 +723,43 @@ interface User {
   email: string;
 }
 
-const container = new SDI({ verbose: true });
+const container = createContainer({ verbose: true });
+
+// Batch registration with types
+const configs: ServiceConfig[] = [
+  { 
+    class: UserService, 
+    name: 'userService',
+    decorators: ['logging', 'cache'],
+    lifecycle: 'singleton',
+    tags: ['business']
+  }
+];
+
+container.batchRegister(configs);
 const userService = container.resolve<IUserService>('userService');
 ```
 
 ## 📊 Performance
 
-SDI v2.0 is designed for performance:
+SDIJS v2.1 is designed for enterprise performance:
 
 - **Lazy resolution** - Services created only when needed
 - **Efficient caching** - Singleton instances cached with WeakMap
 - **Memory limits** - Configurable limits prevent memory leaks
 - **Auto-binding** - Optional method binding with caching
 - **Minimal overhead** - Zero dependencies, pure JavaScript
-- **🏷️ Fast tag discovery** - Optimized Set operations for tag matching
-- **Scalable architecture** - Performance tested with 55 services and 100+ tags
-- **Quick operations** - Tag discovery <100ms, registration <1000ms
+- **Fast tag discovery** - Optimized Set operations for tag matching
+- **Scalable architecture** - Performance tested with 55+ services and 100+ tags
+- **Universal validation** - Efficient method discovery with prototype chain walking
+- **Smart decorator caching** - Optimized decorator application and validation
+
+**Performance Results:**
+- Tag discovery: <100ms for 100+ tags
+- Service registration: <1000ms for 55+ services  
+- Universal method validation: <10ms per service
+- Decorator application: <5ms per decorator
 
 ---
 
-**SDI v2.0** - Modern DI that grows with your application while keeping your code clean, secure, and testable. 🚀
+**SDIJS v2.1** - Modern DI with advanced decorators that grows with your application while keeping your code clean, secure, and testable. 🚀

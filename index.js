@@ -230,6 +230,78 @@ class SDI {
     return this;
   }
 
+  /**
+   * Register services in batch with decorator configuration
+   * @param {Array} serviceConfigs - Array of service configuration objects
+   * @returns {SDI} For chaining
+   * 
+   * @example
+   * container.batchRegister([
+   *   { class: ViewUseCase, name: 'viewUseCase', decorators: ['cacheDecorator', 'timingDecorator'] },
+   *   { class: UserService, name: 'userService', lifecycle: 'transient' }
+   * ]);
+   */
+  batchRegister(serviceConfigs) {
+    if (!Array.isArray(serviceConfigs)) {
+      throw new Error('batchRegister requires an array of service configurations');
+    }
+
+    serviceConfigs.forEach(config => {
+      if (!config || typeof config !== 'object') {
+        throw new Error('Each service configuration must be an object');
+      }
+
+      if (!config.class) {
+        throw new Error('Service configuration must have a "class" property');
+      }
+
+      const name = config.name || this._formatName(config.class.name);
+      const lifecycle = config.lifecycle || 'singleton';
+      
+      let builder = this.register(config.class, name);
+
+      // Apply decorators if specified
+      if (config.decorators && config.decorators.length > 0) {
+        builder = builder.decorateWith(config.decorators);
+      }
+
+      // Apply custom decorators if specified
+      if (config.customDecorators && config.customDecorators.length > 0) {
+        config.customDecorators.forEach(decoratorFn => {
+          builder = builder.decorate(decoratorFn);
+        });
+      }
+
+      // Apply tags if specified
+      if (config.tags && config.tags.length > 0) {
+        builder = builder.withTags(...config.tags);
+      }
+
+      // Apply lifecycle
+      switch (lifecycle.toLowerCase()) {
+        case 'singleton':
+          builder.asSingleton();
+          break;
+        case 'transient':
+          builder.asTransient();
+          break;
+        case 'scoped':
+          builder.asScoped();
+          break;
+        case 'value':
+          builder.asValue();
+          break;
+        case 'factory':
+          builder.asFactory().asSingleton();
+          break;
+        default:
+          throw new Error(`Unknown lifecycle: ${lifecycle}`);
+      }
+    });
+
+    return this;
+  }
+
   // ============ SCOPE MANAGEMENT ============
   
   /**
@@ -590,8 +662,267 @@ class SDI {
         : service.implementation;
     }
 
+    // Apply decorators if any are defined
+    instance = this._applyDecorators(instance, service, scope);
+
     this._callHooks('afterCreate', { service, scope, instance });
     return instance;
+  }
+
+  /**
+   * Apply decorators to a service instance
+   * @param {*} instance - The service instance to decorate
+   * @param {Object} service - The service configuration
+   * @param {Object} scope - The current scope
+   * @returns {*} The decorated instance
+   */
+  _applyDecorators(instance, service, scope) {
+    let decoratedInstance = instance;
+
+    // Apply decorator services (resolved from container)
+    if (service.decorators && service.decorators.length > 0) {
+      for (const decoratorName of service.decorators) {
+        try {
+          const decoratorService = this._resolve(decoratorName, scope);
+          
+          // Validate decorator service
+          this._validateDecoratorService(decoratorService, decoratorName, service.name);
+          
+          // Apply decoration
+          const previousInstance = decoratedInstance;
+          decoratedInstance = decoratorService.decorate(decoratedInstance);
+          
+          // Validate decoration result
+          this._validateDecorationResult(decoratedInstance, previousInstance, decoratorName, service.name);
+          
+          if (this.options.verbose) {
+            console.log(`[SDIJS:DECORATOR] Applied decorator '${decoratorName}' to service '${service.name}'`);
+          }
+        } catch (error) {
+          throw new Error(`Failed to apply decorator '${decoratorName}' to service '${service.name}': ${error.message}`);
+        }
+      }
+    }
+
+    // Apply custom decorator functions
+    if (service.customDecorators && service.customDecorators.length > 0) {
+      for (let i = 0; i < service.customDecorators.length; i++) {
+        const decoratorFn = service.customDecorators[i];
+        try {
+          // Validate custom decorator function
+          this._validateCustomDecorator(decoratorFn, i, service.name);
+          
+          const previousInstance = decoratedInstance;
+          decoratedInstance = decoratorFn(decoratedInstance);
+          
+          // Validate decoration result
+          this._validateDecorationResult(decoratedInstance, previousInstance, `custom#${i}`, service.name);
+          
+          if (this.options.verbose) {
+            console.log(`[SDIJS:DECORATOR] Applied custom decorator to service '${service.name}'`);
+          }
+        } catch (error) {
+          throw new Error(`Failed to apply custom decorator #${i} to service '${service.name}': ${error.message}`);
+        }
+      }
+    }
+
+    return decoratedInstance;
+  }
+
+  /**
+   * Validate that a decorator service follows the correct pattern
+   * @param {*} decoratorService - The decorator service to validate
+   * @param {string} decoratorName - Name of the decorator for error messages
+   * @param {string} serviceName - Name of the target service for error messages
+   */
+  _validateDecoratorService(decoratorService, decoratorName, serviceName) {
+    if (!decoratorService) {
+      throw new Error(`Decorator service '${decoratorName}' is null or undefined`);
+    }
+
+    // Check if it has a decorate method
+    if (typeof decoratorService.decorate !== 'function') {
+      if (typeof decoratorService === 'function') {
+        throw new Error(
+          `Decorator service '${decoratorName}' is a function but should be an object with a 'decorate' method. ` +
+          `Did you mean to use .decorate(${decoratorName}) instead of .decorateWith(['${decoratorName}'])?`
+        );
+      }
+      throw new Error(
+        `Decorator service '${decoratorName}' must have a 'decorate' method. ` +
+        `Expected: { decorate(instance) { return decoratedInstance; } }`
+      );
+    }
+
+    // Check method signature
+    if (decoratorService.decorate.length === 0) {
+      console.warn(
+        `⚠️  Decorator '${decoratorName}' decorate() method takes no parameters. ` +
+        `Expected: decorate(serviceInstance) { ... }`
+      );
+    }
+  }
+
+  /**
+   * Validate that a custom decorator function follows the correct pattern
+   * @param {Function} decoratorFn - The decorator function to validate
+   * @param {number} index - Index of the decorator for error messages
+   * @param {string} serviceName - Name of the target service for error messages
+   */
+  _validateCustomDecorator(decoratorFn, index, serviceName) {
+    if (typeof decoratorFn !== 'function') {
+      throw new Error(
+        `Custom decorator #${index} must be a function. ` +
+        `Expected: (serviceInstance) => decoratedInstance`
+      );
+    }
+
+    if (decoratorFn.length === 0) {
+      console.warn(
+        `⚠️  Custom decorator #${index} for service '${serviceName}' takes no parameters. ` +
+        `Expected: (serviceInstance) => decoratedInstance`
+      );
+    }
+  }
+
+  /**
+   * Validate the result of applying a decorator
+   * @param {*} decoratedInstance - The result after decoration
+   * @param {*} originalInstance - The instance before decoration
+   * @param {string} decoratorName - Name of the decorator for error messages
+   * @param {string} serviceName - Name of the target service for error messages
+   */
+  _validateDecorationResult(decoratedInstance, originalInstance, decoratorName, serviceName) {
+    // Check that decorator returned something
+    if (decoratedInstance === undefined || decoratedInstance === null) {
+      throw new Error(
+        `Decorator '${decoratorName}' returned ${decoratedInstance}. ` +
+        `Decorators must return the decorated service instance.`
+      );
+    }
+
+    // Check that it's still an object (unless original was primitive)
+    if (typeof originalInstance === 'object' && typeof decoratedInstance !== 'object') {
+      throw new Error(
+        `Decorator '${decoratorName}' changed service type from object to ${typeof decoratedInstance}. ` +
+        `Decorators should preserve the service interface.`
+      );
+    }
+
+    // Universal method validation - validate ALL public methods
+    if (originalInstance && typeof originalInstance === 'object') {
+      const publicMethods = this._getPublicMethods(originalInstance);
+      const removedMethods = [];
+      const changedSignatures = [];
+      
+      for (const methodName of publicMethods) {
+        // Check if method was removed
+        if (typeof decoratedInstance[methodName] !== 'function') {
+          removedMethods.push(methodName);
+        } else {
+          // Check if signature changed significantly
+          const originalParams = originalInstance[methodName].length;
+          const decoratedParams = decoratedInstance[methodName].length;
+          
+          // Only warn if there's a real signature change (but smart about rest parameters)
+          if (originalParams !== decoratedParams) {
+            // Check if the decorated method uses rest parameters
+            const decoratedMethodStr = decoratedInstance[methodName].toString();
+            const usesRestParams = /\(\s*\.\.\./.test(decoratedMethodStr);
+            
+            // Only warn if it's NOT using rest parameters (which would make 0 params acceptable)
+            if (!usesRestParams || decoratedParams > 0) {
+              changedSignatures.push({
+                method: methodName,
+                original: originalParams,
+                decorated: decoratedParams
+              });
+            }
+          }
+        }
+      }
+
+      // Throw error if any public methods were removed
+      if (removedMethods.length > 0) {
+        throw new Error(
+          `Decorator '${decoratorName}' removed public method(s) from service '${serviceName}': ${removedMethods.join(', ')}. ` +
+          `Decorators must preserve the original service interface.`
+        );
+      }
+
+      // Warn about signature changes
+      for (const change of changedSignatures) {
+        console.warn(
+          `⚠️  Decorator '${decoratorName}' changed '${change.method}' method signature for service '${serviceName}'. ` +
+          `Original: ${change.original} params, Decorated: ${change.decorated} params`
+        );
+      }
+
+      // Warn if important properties were lost
+      const originalKeys = Object.keys(originalInstance);
+      const decoratedKeys = Object.keys(decoratedInstance);
+      const lostKeys = originalKeys.filter(key => !(key in decoratedInstance));
+      
+      if (lostKeys.length > 0) {
+        console.warn(
+          `⚠️  Decorator '${decoratorName}' removed properties from service '${serviceName}': ${lostKeys.join(', ')}. ` +
+          `Consider using { ...originalInstance, ...decoratedProperties } to preserve all properties.`
+        );
+      }
+
+      // Success validation in verbose mode
+      if (this.options.verbose && publicMethods.length > 0) {
+        console.log(`[SDIJS:VALIDATION] Decorator '${decoratorName}' successfully preserved service interface for '${serviceName}' (${publicMethods.length} methods: ${publicMethods.join(', ')})`);
+      }
+    }
+  }
+
+  /**
+   * Get all public methods from a service instance
+   * Public methods: functions that don't start with _ or $ and aren't constructor
+   * @param {Object} serviceInstance - The service instance to analyze
+   * @returns {string[]} Array of public method names
+   */
+  _getPublicMethods(serviceInstance) {
+    const methods = [];
+    const allMethodNames = this._getAllMethodNames(serviceInstance);
+    
+    for (const methodName of allMethodNames) {
+      if (typeof serviceInstance[methodName] === 'function' && 
+          !methodName.startsWith('_') && 
+          !methodName.startsWith('$') &&
+          methodName !== 'constructor') {
+        methods.push(methodName);
+      }
+    }
+    
+    return methods;
+  }
+
+  /**
+   * Get all method names including inherited ones from the prototype chain
+   * @param {Object} obj - The object to analyze
+   * @returns {string[]} Array of all method names
+   */
+  _getAllMethodNames(obj) {
+    const methods = new Set();
+    
+    // Walk up the prototype chain
+    let current = obj;
+    while (current && current !== Object.prototype) {
+      // Get own property names (non-inherited)
+      Object.getOwnPropertyNames(current).forEach(name => {
+        if (typeof obj[name] === 'function') {
+          methods.add(name);
+        }
+      });
+      
+      // Move up the prototype chain
+      current = Object.getPrototypeOf(current);
+    }
+    
+    return Array.from(methods);
   }
 
   _createDependencyProxy(scope) {
@@ -610,7 +941,7 @@ class SDI {
         }
         
         if (this.options.verbose) {
-          console.log(`🔍 Resolving dependency: ${keyStr}`);
+          console.log(`[SDIJS:RESOLVE] Resolving dependency: ${keyStr}`);
         }
         
         return this._resolve(keyStr, scope);
@@ -717,6 +1048,8 @@ class ServiceBuilder {
     this.factory = false;
     this.conditions = [];
     this.tags = new Set();
+    this.decorators = []; // Array of decorator service names
+    this.customDecorators = []; // Array of custom decorator functions
   }
 
   /**
@@ -817,6 +1150,45 @@ class ServiceBuilder {
     return this.container;
   }
 
+  /**
+   * Add decorators to this service
+   * @param {string|string[]|Function} decorators - Decorator service names or function
+   * @returns {ServiceBuilder} For chaining
+   */
+  decorateWith(decorators) {
+    if (Array.isArray(decorators)) {
+      decorators.forEach(decorator => {
+        if (typeof decorator === 'string') {
+          this.decorators.push(decorator);
+        } else if (typeof decorator === 'function') {
+          this.customDecorators.push(decorator);
+        } else {
+          throw new Error('Decorators must be service names (strings) or functions');
+        }
+      });
+    } else if (typeof decorators === 'string') {
+      this.decorators.push(decorators);
+    } else if (typeof decorators === 'function') {
+      this.customDecorators.push(decorators);
+    } else {
+      throw new Error('Decorators must be service names (strings) or functions');
+    }
+    return this;
+  }
+
+  /**
+   * Add a custom decorator function (escape hatch)
+   * @param {Function} decoratorFn - Function that takes a service and returns decorated service
+   * @returns {ServiceBuilder} For chaining
+   */
+  decorate(decoratorFn) {
+    if (typeof decoratorFn !== 'function') {
+      throw new Error('Decorator must be a function');
+    }
+    this.customDecorators.push(decoratorFn);
+    return this;
+  }
+
   // ============ CONTAINER METHODS FOR CHAINING ============
 
   /**
@@ -894,11 +1266,13 @@ class ServiceBuilder {
       lifecycle: this.lifecycle,
       factory: this.factory,
       tags: this.tags,
-      name: this.name
+      name: this.name,
+      decorators: this.decorators,
+      customDecorators: this.customDecorators
     });
 
     if (this.container.options.verbose) {
-      console.log(`📝 Registered: ${this.name} [${this.lifecycle}]`);
+      console.log(`[SDIJS:REGISTER] Service '${this.name}' [${this.lifecycle}]${this.decorators.length || this.customDecorators.length ? ' with decorators' : ''}`);
     }
 
     return this.container;

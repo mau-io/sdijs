@@ -1,10 +1,66 @@
 /**
- * SDI v2.0 TypeScript Definitions
- * Type-safe dependency injection with maintained destructuring
+ * SDIJS - Simple Dependency Injection for JavaScript
+ * A lightweight, modern dependency injection container
+ * Version: 2.1.0
  */
 
 /** Service lifecycle types */
 export type Lifecycle = 'singleton' | 'transient' | 'scoped' | 'value';
+
+/** Decorator function type */
+export type DecoratorFunction = (serviceInstance: any) => any;
+
+/** Service configuration for batch registration */
+export interface ServiceConfig {
+  /** Service class/function */
+  class: Constructor<any> | ServiceFactory<any>;
+  /** Service name (optional, auto-inferred if not provided) */
+  name?: string;
+  /** Service lifecycle (default: singleton) */
+  lifecycle?: Lifecycle;
+  /** Decorator service names */
+  decorators?: string[];
+  /** Custom decorator functions */
+  customDecorators?: DecoratorFunction[];
+  /** Service tags */
+  tags?: string[];
+}
+
+/** Interface for decorator services that apply cross-cutting concerns to other services.
+ * 
+ * Decorator Pattern Requirements:
+ * - Must have a `decorate` method that takes a service instance and returns a decorated version
+ * - Must preserve the original service interface (all methods and properties)
+ * - Should use spread operator (...originalInstance) to preserve properties
+ * - The decorate method should accept the service instance as a parameter
+ * 
+ * @example
+ * ```typescript
+ * class LoggingDecorator implements DecoratorService {
+ *   constructor(private logger: Logger) {}
+ *   
+ *   decorate(serviceInstance: any) {
+ *     return {
+ *       ...serviceInstance, // ✅ Preserves all properties
+ *       execute: async (params: any) => {
+ *         this.logger.log(`Executing with params: ${JSON.stringify(params)}`);
+ *         const result = await serviceInstance.execute(params);
+ *         this.logger.log(`Result: ${JSON.stringify(result)}`);
+ *         return result;
+ *       }
+ *     };
+ *   }
+ * }
+ * ```
+ */
+export interface DecoratorService {
+  /**
+   * Decorates a service instance with additional functionality
+   * @param serviceInstance - The original service instance to decorate
+   * @returns The decorated service instance with preserved interface
+   */
+  decorate(serviceInstance: any): any;
+}
 
 /** Container configuration options */
 export interface SDIOptions {
@@ -23,7 +79,7 @@ export interface SDIOptions {
   /** Maximum number of scopes that can be created */
   maxScopes?: number;
   /** Maximum number of hooks per event type */
-  maxHooksPerEvent?: number;
+  maxHooks?: number;
 }
 
 /** Internal service registration metadata */
@@ -38,6 +94,10 @@ export interface ServiceRegistration<T = any> {
   tags: ReadonlySet<string>;
   /** Unique service name */
   name: string;
+  /** Decorators associated with this service */
+  decorators?: string[];
+  /** Custom decorators associated with this service */
+  customDecorators?: DecoratorFunction[];
 }
 
 /** Data passed to lifecycle hooks */
@@ -99,6 +159,13 @@ export declare class SDI {
    * @returns Container for chaining
    */
   registerAll(services: Record<string, any>): SDI;
+  
+  /** 
+   * Register services in batch with decorator configuration
+   * @param serviceConfigs Array of service configuration objects
+   * @returns Container for chaining
+   */
+  batchRegister(serviceConfigs: ServiceConfig[]): SDI;
   
   /** 
    * Register a value directly (no instantiation)
@@ -389,6 +456,20 @@ export declare class ServiceBuilder<T> {
    * @returns ServiceBuilder for chaining
    */
   transient<U>(nameOrImplementation: Constructor<U> | ServiceFactory<U> | string, implementation?: Constructor<U> | ServiceFactory<U>): ServiceBuilder<U>;
+  
+  /** 
+   * Decorate the service with specified decorators
+   * @param decorators Decorator names or functions
+   * @returns ServiceBuilder for chaining
+   */
+  decorateWith(decorators: string | string[] | DecoratorFunction): ServiceBuilder<T>;
+  
+  /** 
+   * Decorate the service with a custom decorator function
+   * @param decoratorFn Decorator function
+   * @returns ServiceBuilder for chaining
+   */
+  decorate(decoratorFn: DecoratorFunction): ServiceBuilder<T>;
 }
 
 /** 

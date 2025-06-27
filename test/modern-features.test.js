@@ -425,9 +425,9 @@ describe('SDI v2.0 Modern Features', () => {
         verboseContainer.singleton(VerboseTestService);
         verboseContainer.resolve('verboseTestService');
         
-        assert.strictEqual(logs.some(log => log.includes('📝 Registered: config [value]')), true);
-        assert.strictEqual(logs.some(log => log.includes('📝 Registered: verboseTestService [singleton]')), true);
-        assert.strictEqual(logs.some(log => log.includes('🔍 Resolving dependency: config')), true);
+        assert.strictEqual(logs.some(log => log.includes('[SDIJS:REGISTER] Service \'config\' [value]')), true);
+        assert.strictEqual(logs.some(log => log.includes('[SDIJS:REGISTER] Service \'verboseTestService\' [singleton]')), true);
+        assert.strictEqual(logs.some(log => log.includes('[SDIJS:RESOLVE] Resolving dependency: config')), true);
       } finally {
         console.log = originalLog;
       }
